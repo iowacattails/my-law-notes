@@ -1,14 +1,19 @@
+---
+layout: default
+---
+
 <style>
-body {background:linear-gradient(0deg,#FFD700 10%,#FFFFE0 20%,#FFD700 30, #FFFFE0 40%,#FFD700 50%,#FFFFE0 60%,#FFD700 70%,#FFFFE0 80%,#FFD700 90%);background-size:100% 40px;font-family:Arial,sans-serif;margin:0;padding:40px 20px;color:#000}
+body {background:linear-gradient(0deg,#FFD700 10%,#FFFFE0 20%,#FFD700 30%,#FFFFE0 40%,#FFD700 50%,#FFFFE0 60%,#FFD700 70%,#FFFFE0 80%,#FFD700 90%);background-size:100% 40px;font-family:Arial,sans-serif;margin:0;padding:40px 20px;color:#000}
 h1 {font-size:28pt;color:rgb(0,32,96);text-align:center;margin:0 0 20px}
 h2 {font-size:20pt;color:rgb(0,32,96)}
-a {color:rgb(0,32,96);font-weight:bold}
-blockquote {border-left:5px solid #FFD700;padding-left:15px;background:#FFFFE0;font-style:italic}
+a {color:rgb(0,32,96);font-weight:bold;text-decoration:none}
+a:hover {text-decoration:underline}
+blockquote {border-left:5px solid #FFD700;padding:15px;background:#FFFFE0;font-style:italic}
 </style>
 
 # abrogating common law
 
-brogated if you can’t define common law?
+How can common law be abrogated if you can’t define common law?
 What is common law?
 
  Define common law.
@@ -194,4 +199,6 @@ translates to:
    The common law of England and Magna Charta is the “Rule of Law”.
 
 https://archive.org/details/in.ernet.dli.2015.73241
+
+
 *Back to [Index](index.md)*
