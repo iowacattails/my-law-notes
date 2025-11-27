@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Abrogating Common Law</title>   <!-- ← change this -->
+  <style>
+    body {font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          line-height:1.7; color:#333; max-width:960px; margin:0 auto; padding:2rem 1rem; background:#fdfdfd;}
+    header {text-align:center; margin-bottom:2rem; border-bottom:1px solid #eee; padding-bottom:1rem;}
+    h1 {margin:0; font-size:2.6rem; color:#1a1a1a;}
+    h2 {margin-top:2.5rem; color:#0066cc;}
+    #search-container {position:sticky; top:1rem; background:#fff; padding:1rem; border-radius:8px;
+                       box-shadow:0 2px 12px rgba(0,0,0,.1); margin-bottom:2rem; z-index:10;}
+    #search {width:100%; padding:.9rem 1.2rem; font-size:1.15rem; border:2px solid #0066cc; border-radius:6px;}
+    #search:focus {outline:none; border-color:#004999;}
+    .no-results {color:#d9534f; font-weight:bold; text-align:center; margin:2rem 0; display:none;}
+    .highlight {background:#fff3c4; padding:0.1em 0.3em; border-radius:4px;}
+    article {text-align:justify;}
+    ul, ol {padding-left:2.5em;}
+    footer {margin-top:5rem; padding-top:2rem; border-top:1px solid #eee; text-align:center; color:#666;}
+    @media (prefers-color-scheme: dark) {
+      body {background:#111; color:#ddd;}
+      #search-container {background:#222;}
+      .highlight {background:#665500;}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>The Abrogating Common Law</h1>   <!-- ← change this -->
+  <p>Full searchable text</p>
+</header>
+
+<div id="search-container">
+  <input type="text" id="search" placeholder="Search this page instantly…" autofocus>
+</div>
+
+<div id="no-results" class="no-results">No results found.</div>
+
+<article id="content">
+  <!-- ←←← PASTE YOUR ACTUAL PAGE CONTENT HERE ↓↓↓ -->
+  <p>The attempt to abrogate the ancient common law of England in America began almost immediately after the Revolution was won.</p>
+  <p>While the Founders repeatedly declared in their <strong>Declarations of Rights</strong> and in the Declaration of Independence itself…</p>
+  <!-- … all the rest of your text, headings, lists, quotes … -->
+  <p>It is waiting to be remembered.</p>
+  <!-- ←←← END OF YOUR CONTENT -->
+</article>
+
+<footer>
+  <p><a href="index.html">← Back to Home</a> • Common Law Restoration Project • November 2025</p>
+</footer>
+
+<script>
+  const search = document.getElementById('search');
+  const content = document.getElementById('content');
+  const noResults = document.getElementById('no-results');
+  const original = content.innerHTML;
+
+  search.addEventListener('input', () => {
+    const term = search.value.trim();
+    if (!term) { content.innerHTML = original; noResults.style.display='none'; return; }
+
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    content.innerHTML = original.replace(regex, '<span class="highlight">$1</span>');
+
+    noResults.style.display = content.innerHTML.includes('highlight') ? 'none' : 'block';
+  });
+</script>
+
+</body>
+</html>
