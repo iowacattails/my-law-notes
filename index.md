@@ -13,8 +13,5 @@ a {color:rgb(0,32,96);font-weight:bold;font-size:14pt;text-decoration:none}
 
 <ul>
 <li><a href="petitions.md">Petitions</a></li>
-<li><a href="common-law-of-england.md">Common Law of England</a></li>
-<li><a href="common-law-defined-raw.md">Common Law Defined (raw)</a></li>
-<li><a href="common-law-defined-polished.md">Common Law Defined (polished)</a></li>
-<li><a href="abrogating-common-law.md">abrogating common law</a></li>
+
 </ul>
