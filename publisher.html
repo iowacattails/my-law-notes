@@ -5,16 +5,16 @@
 <title>Law Note Publisher</title>
 <style>
   body {background:#ff0; margin:0; padding:10px; font-family:Arial;}
-  h1 {font-size:2em; text-align:center; margin:15px 0 10px 0;}
+  h1 {font-size:2.2em; text-align:center; margin:20px 0 60px 0;}
   input, textarea, button {width:100%; padding:12px; margin:8px 0; font-size:1em; box-sizing:border-box;}
   button {background:#000; color:#ff0; border:none; padding:18px; font-weight:bold; cursor:pointer;}
   .section {border:2px solid #000; padding:20px; margin:15px 0; background:#fff;}
   .add {background:#333; color:#ff0; font-size:0.9em;}
-  .thumb {max-width:75%; margin:30px auto; display:block; border:3px solid #000;}
+  .thumb {max-width:75%; margin:40px auto; display:block; border:3px solid #000;}
   .delete-img {position:absolute; top:8px; right:8px; background:#c00; color:#fff; border:none; width:30px; height:30px; font-size:20px; cursor:pointer;}
   .thumb-container {position:relative; display:block; text-align:center;}
-  #preview {background:#ff0; padding:20px; margin-top:30px; border:3px solid #000;}
-  .preview h1 {margin-bottom:30px;}
+  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
+  .preview h1 {margin-bottom:60px;}
   .preview p {line-height:1.8;}
 </style>
 </head>
@@ -103,7 +103,7 @@ function updatePreview() {
 
     sec.querySelectorAll('.thumb').forEach(img => {
       if (img.src && img.style.display !== 'none') {
-        html += `<br><div style="text-align:center;"><img src="${img.src}" style="max-width:75%; margin:30px auto; display:block;"></div><br>`;
+        html += `<br><div style="text-align:center;"><img src="${img.src}" style="max-width:75%;"></div><br>`;
       }
     });
 
@@ -120,7 +120,7 @@ function updatePreview() {
 }
 
 function publish() {
-  alert("Ready for full auto-publish — just say the word!");
+  alert("Ready for full auto-publish — just say “add full auto-publish”");
 }
 </script>
 
