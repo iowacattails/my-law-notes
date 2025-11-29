@@ -5,40 +5,42 @@
 <title>Law Note Publisher</title>
 <style>
   body {background:#ff0; margin:0; padding:10px; font-family:Arial;}
-  h1 {font-size:2.2em; text-align:center; margin:20px 0 60px 0;}
-  input, textarea, button {width:100%; padding:12px; margin:8px 0; font-size:1em; box-sizing:border-box;}
-  button {background:#000; color:#ff0; border:none; padding:18px; font-weight:bold; cursor:pointer;}
-  .section {border:2px solid #000; padding:20px; margin:15px 0; background:#fff;}
-  .add {background:#333; color:#ff0; font-size:0.9em;}
-  .thumb {max-width:75%; margin:40px auto; display:block; border:3px solid #000;}
-  .delete-img {position:absolute; top:8px; right:8px; background:#c00; color:#fff; border:none; width:30px; height:30px; font-size:20px; cursor:pointer;}
-  .thumb-container {position:relative; display:block; text-align:center;}
-  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
-  .preview h1 {margin-bottom:60px;}
+  h1 {font-size:2.2em; text-align:center; margin:20px 0 80px 0;} /* more space under title */
+  input, textarea, button {width:100%; padding:12px; margin:20px 0; font-size:1em; box-sizing:border-box;}
+  button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
+  .section {border:3px solid #000; padding:30px; margin:30px 0; background:#fff;}
+  .add {background:#333; color:#ff0; font-size:0.9em; padding:15px;}
+  .thumb {max-width:50%; margin:50px auto; display:block; border:4px solid #000; box-shadow:6px 6px 0 #000;}
+  .delete-img {position:absolute; top:10px; right:10px; background:#c00; color:#fff; border:none; width:40px; height:40px; font-size:28px; cursor:pointer; border-radius:50%;}
+  .thumb-container {position:relative; text-align:center; margin:30px 0;}
+  #preview {background:#ff0; padding:40px; margin-top:50px; border:4px solid #000;}
+  .preview h1 {margin-bottom:80px;}
+  .preview strong {font-size:1.3em; display:block; margin:60px 0 40px 0;}
+  .preview p {line-height:2;}
 </style>
 </head>
 <body>
 
 <h1>Law Note Publisher</h1>
 
-<input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
+<input type="text" id="title" placeholder="Page Title" oninput="updatePreview()" style="font-size:1.4em; padding:20px; text-align:center;">
 
 <div id="sections">
   <div class="section">
     <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-    <textarea rows="6" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    <textarea rows="8" class="note" placeholder="Main note / quote (optional)" oninput="updatePreview()"></textarea>
     
     <div class="images">
       <div class="thumb-container">
         <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
         <img class="thumb" style="display:none;">
         <button class="delete-img" style="display:none;" onclick="deleteImage(this)">X</button>
+        <br><small>Tap X to delete this image</small>
       </div>
-    </div>
     <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
     
     <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
-    <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
+    <input type="url" class="source" placeholder="Source URL (Archive.org, etc.)" oninput="updatePreview()">
     
     <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
@@ -53,13 +55,13 @@ function addSection() {
   const clone = document.querySelector('.section').cloneNode(true);
   clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
   clone.querySelectorAll('.thumb, .delete-img').forEach(el => el.style.display = 'none');
-  document.getElementById('sections').appendChild(clone);
+  document.getElementById('sections').appendChild(cloned);
   updatePreview();
 }
 
 function addPhoto(btn) {
   const container = document.createElement('div');
-  container.className = 'thumb-container';
+  container.class="thumb-container">
   container.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
                         <img class="thumb" style="display:none;">
                         <button class="delete-img" style="display:none;" onclick="deleteImage(this)">X</button>`;
@@ -97,18 +99,18 @@ function updatePreview() {
     const cite = sec.querySelector('.cite').value.trim();
     const source = sec.querySelector('.source').value.trim();
 
-    if (header) html += `<br><br><strong>${header}</strong><br>`;
+    if (header) html += `<br><br><strong style="font-size:2.4em; display:block; margin:60px 0 50px 0;">${header}</strong>`;
     if (note) html += note.replace(/\n/g, '<br><br>');
 
     sec.querySelectorAll('.thumb').forEach(img => {
       if (img.src && img.style.display !== 'none') {
-        html += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:75%;"></div><br>`;
+        html += `<br><div style="text-align:center;margin:60px 0;"><img src="${img.src}" style="max-width:50%; border:4px solid #000; box-shadow:8px 8px 0 #000;"></div><br>`;
       }
     });
 
     if (cite || source) {
-      html += `<br><em>Citation: ${cite || '—'}</em>`;
-      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
+      html += `<br><em style="font-size:1.4em;">Citation: ${cite || '—'}</em>`;
+      if (source) html += ` — <a href="${source}" target="_blank" style="color:#00f; font-weight:bold;">Source Link</a>`;
       html += `<br><br>`;
     }
   });
@@ -118,61 +120,45 @@ function updatePreview() {
 }
 
 function publish() {
-  const title = (document.getElementById('title').value || "Untitled").trim();
-  if (!title) return alert("Please add a page title first!");
+  const title = document.getElementById('title').value.trim() || "Untitled";
+  if (!title) return alert("Add a page title first!");
 
-  const slug = title.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '') + ".html";
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + ".html";
 
-  let pageHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>${title}</title>
-<style>
-  body {background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.6;max-width:900px;margin:40px auto;}
-  h1 {font-size:3em;text-align:center;margin-bottom:60px;}
-  .back {display:block;background:#fff;color:#000;text-align:center;padding:20px;margin:4em auto;font-size:1.6em;border:3px solid #000;text-decoration:none;max-width:500px;font-weight:bold;}
-  img {max-width:75%;margin:40px auto;display:block;border:3px solid #000;}
-</style>
-</head>
-<body>
-<h1>${title}</h1>
-<p>`;
+  let pageHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
+<style>body{background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin:20px 0 80px 0;} .back {display:block;background:#fff;color:#000;text-align:center;padding:20px;margin:4em auto;font-size:1.6em;border:3px solid #000;text-decoration:none;max-width:img{max-width:50%;margin:60px auto;display:block;border:4px solid #000; box-shadow:strong{font-size:2.4em; display:block; margin:60px 0 50px 0;}</style></head><body><h1>${title}</h1><p>`;
 
+  // Same as preview logic but for actual output
   document.querySelectorAll('.section').forEach(sec => {
     const h = sec.querySelector('.header').value.trim();
     const n = sec.querySelector('.note').value.trim();
-    const c = sec.querySelector('.cite').value.trim();
-    const s = sec.querySelector('.source').value.trim();
+    const cite = sec.querySelector('.cite').value.trim();
+    const source = sec.querySelector('.source').value.trim();
 
     if (h) pageHTML += `<br><br><strong>${h}</strong><br>`;
-    if (n) pageHTML += n.replace(/\n/g, '<br><br>');
+    if (note) pageHTML += n.replace(/\n/g, '<br><br>';
 
     sec.querySelectorAll('.thumb').forEach(img => {
       if (img.src && img.style.display !== 'none') {
-        pageHTML += `<br><div style="text-align:center"><img src="${img.src}"></div><br>`;
+        pageHTML += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%; border:4px solid #000; box-shadow:8px 30px 0 #000;"></div><br>`;
       }
     });
 
-    if (c || s) {
-      pageHTML += `<br><em>Citation: ${c || '—'}</em>`;
-      if (s) pageHTML += ` — <a href="${s}" target="_blank">Source</a>`;
-      pageHTML += `<br><br>`;
+    if (cite || source) {
+      html += `<br><em>Citation: ${cite || '—'}</em>`;
+      if (cite || source) pageHTML += `<br><em>Citation: ${cite || '—'} ${source ? ` — <a href="${source}" target="_blank">Source Link</em>`;
+      html += `<br><br>`;
     }
   });
 
   pageHTML += `</p>
-<a href="index.html" class="back">← Return to Law Book Links</a>
-</body>
-</html>`;
+<a href="index.html" class="back">← Return to Law Book Links</p>
+</body></html>`;
 
-  const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(pageHTML)}`;
-  window.open(url, '_blank');
-  alert("GitHub opened — just tap the green Commit button!");
+  const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(pageHTML}`;
+  window.open(url,'_blank');
+  alert("GitHub opened — just tap Commit! Your new page will be live in seconds!");
 }
 </script>
-
 </body>
 </html>
