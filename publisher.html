@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<h1>Law Publisher</h1>
+<h1>Law Note Publisher</h1>
 
 <input type="text" id="title" placeholder="Page Title (optional)" oninput="updatePreview()">
 
@@ -43,6 +43,7 @@
 <div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
 
 <script>
+// All the same functions from before (addSection, addPhoto, handleImage, updatePreview, publish)
 function addSection() {
   const clone = document.querySelector('.section').cloneNode(true);
   clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
@@ -89,7 +90,7 @@ function updatePreview() {
 
     if (cite || source) {
       html += `<br><em>Citation: ${cite || '—'}</em>`;
-      if (source) html += ` — <a href="${source}" target="_blank">Source Link</a>`;
+      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
       html += `<br><br>`;
     }
   });
@@ -103,7 +104,7 @@ function publish() {
   if (!document.getElementById('title').value.trim()) {
     if (!confirm("No title — publish anyway?")) return;
   }
-  alert("Full auto-publish (GitHub + index) ready in next version — preview is perfect!");
+  alert("Full auto-publish ready in next version — preview is perfect!");
 }
 </script>
 
