@@ -10,20 +10,20 @@
   button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
   .section {border:2px solid #000; padding:20px; margin:20px 0; background:#fff;}
   .add {background:#333; color:#ff0; font-size:0.9em;}
-  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
   .thumb {max-width:300px; margin:10px 0; border:2px solid #000;}
+  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
 </style>
 </head>
 <body>
 
-<h1. Law Publisher
+<h1>Law Publisher</h1>
 
-<input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
+<input type="text" id="title" placeholder="Page Title (optional)" oninput="updatePreview()">
 
 <div id="sections">
-  <div class="section" id="template">
+  <div class="section">
     <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-    <textarea rows="6" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    <textarea rows="6" class="note" placeholder="Main note / quote (optional)" oninput="updatePreview()"></textarea>
     
     <div class="images">
       <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
@@ -31,8 +31,8 @@
     </div>
     <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
     
-    <input type="text" class="cite" placeholder="Citation (e.g., Coke’s Institutes)" oninput="updatePreview()">
-    <input type="url" class="source" placeholder="Source URL (Archive.org, etc.)" oninput="updatePreview()">
+    <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
+    <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
     
     <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
@@ -40,12 +40,13 @@
 
 <button onclick="publish()">PUBLISH NEW PAGE</button>
 
-<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
+<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
 
 <script>
 function addSection() {
-  const clone = document.getElementById('template').cloneNode(true);
-  clone.removeAttribute('id');
+  const clone = document.querySelector('.section').cloneNode(true);
+  clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  clone.querySelectorAll('.thumb').forEach(img => img.style.display = 'none');
   document.getElementById('sections').appendChild(clone);
   updatePreview();
 }
@@ -68,14 +69,14 @@ function handleImage(input) {
 }
 
 function updatePreview() {
-  const title = document.getElementById('title').value || "Untitled";
+  const title = document.getElementById('title').value.trim() || "Untitled Page";
   let html = `<h1>${title}</h1><p>`;
   
   document.querySelectorAll('.section').forEach(sec => {
-    const header = sec.querySelector('.header').value;
-    const note = sec.querySelector('.note').value;
-    const cite = sec.querySelector('.cite').value;
-    const source = sec.querySelector('.source').value;
+    const header = sec.querySelector('.header').value.trim();
+    const note = sec.querySelector('.note').value.trim();
+    const cite = sec.querySelector('.cite').value.trim();
+    const source = sec.querySelector('.source').value.trim();
 
     if (header) html += `<br><br><strong>${header}</strong><br>`;
     if (note) html += note.replace(/\n/g, '<br><br>');
@@ -87,19 +88,22 @@ function updatePreview() {
     });
 
     if (cite || source) {
-      html += `<br><em>Citation: ${cite}</em>`;
-      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
+      html += `<br><em>Citation: ${cite || '—'}</em>`;
+      if (source) html += ` — <a href="${source}" target="_blank">Source Link</a>`;
       html += `<br><br>`;
     }
   });
 
-  html += `</p><a href="index.html" style="display:inline-block;background:#fff;color:#000;padding:20px;margin:40px;font-size:1.6em;border:3px solid #000;text-decoration:none;font-weight:bold;">Return to Law Book Links</a>`;
+  html += `</p><a href="index.html" style="display:inline-block;background:#fff;color:#000;padding:20px;margin:40px auto;font-size:1.6em;border:3px solid #000;text-decoration:none;font-weight:bold;">← Return to Law Book Links</a>`;
   
   document.getElementById('previewContent').innerHTML = html;
 }
 
 function publish() {
-  alert("Full GitHub auto-publish ready in next version — preview is 100% live!");
+  if (!document.getElementById('title').value.trim()) {
+    if (!confirm("No title — publish anyway?")) return;
+  }
+  alert("Full auto-publish (GitHub + index) ready in next version — preview is perfect!");
 }
 </script>
 
