@@ -8,42 +8,54 @@
   h1 {font-size:2em; text-align:center; margin:30px;}
   input, textarea, button {width:100%; padding:12px; margin:8px 0; font-size:1em; box-sizing:border-box;}
   button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
-  .section {border:2px solid #000; padding:15px; margin:15px 0; background:#fff;}
-  .add {background:#333; color:#ff0;}
-  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000; min-height:300px;}
-  .preview h2 {text-align:center;}
-  img {max-width:100%; margin:10px 0;}
+  .section {border:2px solid #000; padding:20px; margin:20px 0; background:#fff;}
+  .add {background:#333; color:#ff0; font-size:0.9em;}
+  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
+  .thumb {max-width:300px; margin:10px 0; border:2px solid #000;}
 </style>
 </head>
 <body>
 
-<h1>Law Publisher</h1>
+<h1. Law Publisher
 
 <input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
 
 <div id="sections">
-  <div class="section">
+  <div class="section" id="template">
     <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
     <textarea rows="6" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
-    <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-    <img class="thumb" style="display:none; max-width:300px;">
+    
+    <div class="images">
+      <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
+      <img class="thumb" style="display:none;">
+    </div>
+    <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
+    
     <input type="text" class="cite" placeholder="Citation (e.g., Coke’s Institutes)" oninput="updatePreview()">
     <input type="url" class="source" placeholder="Source URL (Archive.org, etc.)" oninput="updatePreview()">
+    
     <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
 </div>
 
 <button onclick="publish()">PUBLISH NEW PAGE</button>
 
-<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
+<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
 
 <script>
 function addSection() {
-  const div = document.createElement('div');
-  div.className = 'section';
-  div.innerHTML = document.querySelector('.section').innerHTML;
-  document.getElementById('sections').appendChild(div);
+  const clone = document.getElementById('template').cloneNode(true);
+  clone.removeAttribute('id');
+  document.getElementById('sections').appendChild(clone);
   updatePreview();
+}
+
+function addPhoto(btn) {
+  const div = document.createElement('div');
+  div.className = 'images';
+  div.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
+                   <img class="thumb" style="display:none;">`;
+  btn.parentNode.insertBefore(div, btn);
 }
 
 function handleImage(input) {
@@ -56,34 +68,38 @@ function handleImage(input) {
 }
 
 function updatePreview() {
-  const title = document.getElementById('title').value || "Untitled Page";
+  const title = document.getElementById('title').value || "Untitled";
   let html = `<h1>${title}</h1><p>`;
   
   document.querySelectorAll('.section').forEach(sec => {
     const header = sec.querySelector('.header').value;
     const note = sec.querySelector('.note').value;
-    const img = sec.querySelector('.thumb');
     const cite = sec.querySelector('.cite').value;
     const source = sec.querySelector('.source').value;
 
     if (header) html += `<br><br><strong>${header}</strong><br>`;
     if (note) html += note.replace(/\n/g, '<br><br>');
-    if (img && img.src) html += `<br><img src="${img.src}" style="max-width:100%;"><br>`;
+
+    sec.querySelectorAll('.thumb').forEach(img => {
+      if (img.src && img.style.display !== 'none') {
+        html += `<br><img src="${img.src}" class="thumb"><br>`;
+      }
+    });
+
     if (cite || source) {
       html += `<br><em>Citation: ${cite}</em>`;
-      if (source) html += ` — <a href="${source}" target="_blank">Source Link</a>`;
-      html += `<br>`;
+      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
+      html += `<br><br>`;
     }
-    html += `<br>`;
   });
 
-  html += `</p><a href="index.html" style="display:inline-block;background:#fff;color:#000;padding:20px;margin:40px auto;font-size:1.6em;border:3px solid #000;text-decoration:none;font-weight:bold;">Return to Law Book Links</a>`;
+  html += `</p><a href="index.html" style="display:inline-block;background:#fff;color:#000;padding:20px;margin:40px;font-size:1.6em;border:3px solid #000;text-decoration:none;font-weight:bold;">Return to Law Book Links</a>`;
   
   document.getElementById('previewContent').innerHTML = html;
 }
 
 function publish() {
-  alert("Full auto-publish (GitHub + index update) coming in next 2-minute version — preview works perfectly!");
+  alert("Full GitHub auto-publish ready in next version — preview is 100% live!");
 }
 </script>
 
