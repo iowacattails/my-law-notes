@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Publish New Law Note</title>
+<style>
+  body {background: repeating-linear-gradient(45deg, #fffffd, #fffffd 20px, #fff9c4 20px, #fff9c4 40px); margin:0; padding:40px; font-family:Arial; font-size:1.8em; line-height:1.6; max-width:900px; margin:40px auto;}
+  h1 {font-size:3em; text-align:center;}
+  input, textarea {width:100%; padding:10px; font-size:1.2em; margin:10px 0; border:2px solid #000;}
+  button {display:block; background:#fff; color:#000; text-align:center; padding:20px; margin:20px auto; font-size:1.6em; border:3px solid #000; text-decoration:none; max-width:500px; font-weight:bold; cursor:pointer;}
+  button:hover {background:#fffffd;}
+  .preview {border:2px solid #000; padding:20px; margin:20px 0; background:#fff;}
+</style>
+</head>
+<body>
+<h1>Publish New Law Note</h1>
+
+<input type="text" id="title" placeholder="Page Title (e.g., Common Law)" maxlength="50">
+
+<textarea id="content" placeholder="Paste your note here... (bold, italics, bullets all work)" rows="20"></textarea>
+
+<button onclick="publish()">PUBLISH NEW PAGE</button>
+
+<div class="preview" id="preview"></div>
+
+<script>
+function publish() {
+  const title = document.getElementById('title').value.trim().replace(/\s+/g, '-').toLowerCase();
+  const content = document.getElementById('content').value.trim();
+  if (!title || !content) { alert('Add a title and note first!'); return; }
+  
+  const pageCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title} – My Law Notes</title>
+<style>
+  body {background:#ff0; margin:40px; font-family:Arial; font-size:1.8em; line-height:1.6; max-width:900px; margin:40px auto;}
+  h1 {font-size:3em; text-align:center;}
+  .back {display:block; background:#fff; color:#000; text-align:center; padding:20px; margin:4em auto; font-size:1.6em; border:3px solid #000; text-decoration:none; max-width:500px; font-weight:bold;}
+  a {color:#00f; text-decoration:underline;}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+
+<p>${content.replace(/\n/g, '<br><br>')}</p>
+
+<a href="index.html" class="back">← Return to Law Book Links</a>
+
+</body>
+</html>`;
+  
+  const fileName = title + '.html';
+  const githubUrl = `https://github.com/iowacattails/my-law-notes/new/main?filename=${fileName}&value=${encodeURIComponent(pageCode)}`;
+  
+  alert(`Page created! Go here to commit: ${githubUrl}`);
+  window.open(githubUrl, '_blank');
+  
+  // Preview
+  document.getElementById('preview').innerHTML = `<h2>Preview:</h2><iframe srcdoc="${pageCode.replace(/"/g, '&quot;')}" style="width:100%; height:400px; border:1px solid #000;"></iframe>`;
+}
+</script>
+</body>
+</html>
