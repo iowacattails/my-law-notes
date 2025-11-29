@@ -10,12 +10,12 @@
   button {background:#000; color:#ff0; border:none; padding:18px; font-weight:bold; cursor:pointer;}
   .section {border:2px solid #000; padding:20px; margin:15px 0; background:#fff;}
   .add {background:#333; color:#ff0; font-size:0.9em;}
-  .thumb {max-width:100%; margin:25px 0; border:3px solid #000; position:relative; display:inline-block;}
+  .thumb {max-width:75%; margin:30px auto; display:block; border:3px solid #000;}
   .delete-img {position:absolute; top:8px; right:8px; background:#c00; color:#fff; border:none; width:30px; height:30px; font-size:20px; cursor:pointer;}
+  .thumb-container {position:relative; display:block; text-align:center;}
   #preview {background:#ff0; padding:20px; margin-top:30px; border:3px solid #000;}
-  .preview h1 {margin:10px 0 5px 0;}
-  .preview p {line-height:1.6;}
-  .preview img {margin:30px 0; max-width:100%;}
+  .preview h1 {margin-bottom:30px;}
+  .preview p {line-height:1.8;}
 </style>
 </head>
 <body>
@@ -30,8 +30,8 @@
     <textarea rows="6" class="note" placeholder="Main note / quote (optional)" oninput="updatePreview()"></textarea>
     
     <div class="images">
-      <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-      <div class="thumb-container" style="position:relative; display:inline-block;">
+      <div class="thumb-container">
+        <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
         <img class="thumb" style="display:none;">
         <button class="delete-img" style="display:none;" onclick="deleteImage(this)">×</button>
       </div>
@@ -61,8 +61,6 @@ function addSection() {
 function addPhoto(btn) {
   const container = document.createElement('div');
   container.className = 'thumb-container';
-  container.style.position = 'relative';
-  container.style.display = 'inline-block';
   container.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
                         <img class="thumb" style="display:none;">
                         <button class="delete-img" style="display:none;" onclick="deleteImage(this)">×</button>`;
@@ -105,7 +103,7 @@ function updatePreview() {
 
     sec.querySelectorAll('.thumb').forEach(img => {
       if (img.src && img.style.display !== 'none') {
-        html += `<br><img src="${img.src}" style="max-width:100%; margin:30px 0;"><br>`;
+        html += `<br><div style="text-align:center;"><img src="${img.src}" style="max-width:75%; margin:30px auto; display:block;"></div><br>`;
       }
     });
 
@@ -122,7 +120,7 @@ function updatePreview() {
 }
 
 function publish() {
-  alert("Ready for full auto-publish — say the word and I’ll drop the final version!");
+  alert("Ready for full auto-publish — just say the word!");
 }
 </script>
 
