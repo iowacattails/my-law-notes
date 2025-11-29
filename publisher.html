@@ -4,14 +4,18 @@
 <meta charset="UTF-8">
 <title>Law Note Publisher</title>
 <style>
-  body {background:#ff0; margin:0; padding:20px; font-family:Arial;}
-  h1 {font-size:2em; text-align:center; margin:30px;}
+  body {background:#ff0; margin:0; padding:10px; font-family:Arial;}
+  h1 {font-size:2em; text-align:center; margin:15px 0 10px 0;}
   input, textarea, button {width:100%; padding:12px; margin:8px 0; font-size:1em; box-sizing:border-box;}
-  button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
-  .section {border:2px solid #000; padding:20px; margin:20px 0; background:#fff;}
+  button {background:#000; color:#ff0; border:none; padding:18px; font-weight:bold; cursor:pointer;}
+  .section {border:2px solid #000; padding:20px; margin:15px 0; background:#fff;}
   .add {background:#333; color:#ff0; font-size:0.9em;}
-  .thumb {max-width:300px; margin:10px 0; border:2px solid #000;}
-  #preview {background:#ff0; padding:30px; margin-top:40px; border:3px solid #000;}
+  .thumb {max-width:100%; margin:25px 0; border:3px solid #000; position:relative; display:inline-block;}
+  .delete-img {position:absolute; top:8px; right:8px; background:#c00; color:#fff; border:none; width:30px; height:30px; font-size:20px; cursor:pointer;}
+  #preview {background:#ff0; padding:20px; margin-top:30px; border:3px solid #000;}
+  .preview h1 {margin:10px 0 5px 0;}
+  .preview p {line-height:1.6;}
+  .preview img {margin:30px 0; max-width:100%;}
 </style>
 </head>
 <body>
@@ -27,7 +31,10 @@
     
     <div class="images">
       <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-      <img class="thumb" style="display:none;">
+      <div class="thumb-container" style="position:relative; display:inline-block;">
+        <img class="thumb" style="display:none;">
+        <button class="delete-img" style="display:none;" onclick="deleteImage(this)">×</button>
+      </div>
     </div>
     <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
     
@@ -40,32 +47,46 @@
 
 <button onclick="publish()">PUBLISH NEW PAGE</button>
 
-<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
+<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
 
 <script>
-// All the same functions from before (addSection, addPhoto, handleImage, updatePreview, publish)
 function addSection() {
   const clone = document.querySelector('.section').cloneNode(true);
   clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
-  clone.querySelectorAll('.thumb').forEach(img => img.style.display = 'none');
+  clone.querySelectorAll('.thumb, .delete-img').forEach(el => el.style.display = 'none');
   document.getElementById('sections').appendChild(clone);
   updatePreview();
 }
 
 function addPhoto(btn) {
-  const div = document.createElement('div');
-  div.className = 'images';
-  div.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-                   <img class="thumb" style="display:none;">`;
-  btn.parentNode.insertBefore(div, btn);
+  const container = document.createElement('div');
+  container.className = 'thumb-container';
+  container.style.position = 'relative';
+  container.style.display = 'inline-block';
+  container.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
+                        <img class="thumb" style="display:none;">
+                        <button class="delete-img" style="display:none;" onclick="deleteImage(this)">×</button>`;
+  btn.parentNode.insertBefore(container, btn);
 }
 
 function handleImage(input) {
-  const img = input.parentNode.querySelector('.thumb');
+  const container = input.parentNode;
+  const img = container.querySelector('.thumb');
+  const del = container.querySelector('.delete-img');
   if (input.files[0]) {
     img.src = URL.createObjectURL(input.files[0]);
     img.style.display = 'block';
+    del.style.display = 'block';
   }
+  updatePreview();
+}
+
+function deleteImage(btn) {
+  const container = btn.parentNode;
+  container.querySelector('.thumb').src = '';
+  container.querySelector('.thumb').style.display = 'none';
+  btn.style.display = 'none';
+  container.querySelector('input').value = '';
   updatePreview();
 }
 
@@ -84,7 +105,7 @@ function updatePreview() {
 
     sec.querySelectorAll('.thumb').forEach(img => {
       if (img.src && img.style.display !== 'none') {
-        html += `<br><img src="${img.src}" class="thumb"><br>`;
+        html += `<br><img src="${img.src}" style="max-width:100%; margin:30px 0;"><br>`;
       }
     });
 
@@ -95,16 +116,13 @@ function updatePreview() {
     }
   });
 
-  html += `</p><a href="index.html" style="display:inline-block;background:#fff;color:#000;padding:20px;margin:40px auto;font-size:1.6em;border:3px solid #000;text-decoration:none;font-weight:bold;">← Return to Law Book Links</a>`;
+  html += `</p><a href="index.html" class="back">← Return to Law Book Links</a>`;
   
   document.getElementById('previewContent').innerHTML = html;
 }
 
 function publish() {
-  if (!document.getElementById('title').value.trim()) {
-    if (!confirm("No title — publish anyway?")) return;
-  }
-  alert("Full auto-publish ready in next version — preview is perfect!");
+  alert("Ready for full auto-publish — say the word and I’ll drop the final version!");
 }
 </script>
 
