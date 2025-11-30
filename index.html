@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>My Law Notes</title>
 <style>
-  body {background:#ff0; margin:40px; font-family:Arial; text-align:center; line-height:1.6;}
-  h1 {font-size:2.5em; margin:20px 0;}
+  body {background:#ff0; margin:40px; font-family:Arial; text-align:center;}
+  h1 {font-size:2.5em;}
   .subtitle {font-size:1.8em; margin-bottom:40px;}
   .button {display:inline-block; background:#fff; color:#000; padding:25px 50px; margin:20px; font-size:1.8em; border:4px solid #000; border-radius:15px; text-decoration:none; font-weight:bold;}
   .button:hover {background:#ffff99;}
@@ -15,13 +15,29 @@
 <h1>My Law Notes</h1>
 <h2 class="subtitle">Notes & Historical Law Book Links<br><small>by Rob Logue</small></h2>
 
-<a href="petitions.html" class="button">Petitions</a><br><br>
-<a href="jury-of-vicinage.html" class="button">Jury of the Vicinage</a><br><br>
-<a href="discovery.html" class="button">Discovery</a><br><br>
+<div id="buttons">Loading your notes...</div>
 
-<hr style="border: none; border-top: 3px solid #000; margin:60px 0;">
-
-<p style="font-size:1.2em;">More pages coming soon...</p>
-
+<script>
+// This automatically finds every .html file in your repo (except index.html)
+fetch('https://api.github.com/repos/iowacattails/my-law-notes/contents')
+  .then(r => r.json())
+  .then(files => {
+    const container = document.getElementById('buttons');
+    container.innerHTML = '';
+    files
+      .filter(f => f.name.endsWith('.html') && f.name !== 'index.html' && f.name !== 'publisher.html' && f.name !== 'fixer.html')
+      .sort((a,b) => a.name.localeCompare(b.name))
+      .forEach(f => {
+        const title = f.name.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase());
+        const a = document.createElement('a');
+        a.href = f.name;
+        a.className = 'button';
+        a.textContent = title;
+        container.appendChild(a);
+        container.appendChild(document.createElement('br'));
+        container.appendChild(document.createElement('br'));
+      });
+  });
+</script>
 </body>
 </html>
