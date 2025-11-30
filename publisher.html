@@ -10,8 +10,10 @@
   button {background:#000;color:#ff0;border:none;padding:25px;font-weight:bold;cursor:pointer;}
   .section {border:4px solid #000;padding:30px;margin:30px 0;background:#fff;}
   .thumb {max-width:50%;margin:40px auto;display:block;border:4px solid #000;}
-  .tag-btn {display:inline-block;background:#fff;color:#000;padding:10px 20px;margin:5px;border:3px solid #000;border-radius:10px;cursor:pointer;font-size:1em;}
+  .tag-btn {display:inline-block;background:#fff;color:#000;padding:10px 20px;margin:8px;border:3px solid #000;border-radius:10px;cursor:pointer;font-size:1.1em;}
+  .tag-btn.selected {background:#000;color:#ff0;}
   .tag-input {width:100%;padding:15px;margin:20px 0;font-size:1.2em;}
+  #selected-tags {margin:20px 0;font-weight:bold;font-size:1.3em;}
   #preview {background:#fff;padding:40px;margin-top:50px;border:4px solid #000;}
 </style>
 </head>
@@ -34,8 +36,8 @@
   </div>
 </div>
 
-<div style="margin:40px 0;">
-  <strong>Add tags (pick or type your own):</strong><br>
+<div style="margin:50px 0;">
+  <strong>Tags (tap presets or type your own):</strong><br>
   <div>
     <span class="tag-btn" onclick="toggleTag(this)">Common Law</span>
     <span class="tag-btn" onclick="toggleTag(this)">Trial by Jury</span>
@@ -48,11 +50,11 @@
     <span class="tag-btn" onclick="toggleTag(this)">Locke</span>
     <span class="tag-btn" onclick="toggleTag(this)">Germaine</span>
   </div>
-  <input type="text" class="tag-input" id="custom-tag" placeholder="Type new tag and press Enter" onkeydown="if(event.key==='Enter') addCustomTag()">
-  <div id="selected-tags" style="margin:20px 0;font-weight:bold;"></div>
+  <input type="text" class="tag-input" id="custom-tag" placeholder="Type new tag + press Enter" onkeydown="if(event.key==='Enter') addCustomTag()">
+  <div id="selected-tags">Selected tags: none</div>
 </div>
 
-<button onclick="publish()">PUBLISH NEW PAGE</button>
+<button onclick="publish()">PUBLISH — ONE COMMIT</button>
 
 <div id="preview"><h2>Live Preview</h2><div id="previewContent"></div></div>
 
@@ -63,11 +65,10 @@ function toggleTag(btn) {
   const tag = btn.textContent.trim();
   if (selectedTags.includes(tag)) {
     selectedTags = selectedTags.filter(t => t !== tag);
-    btn.style.background = '#fff';
+    btn.classList.remove('selected');
   } else {
     selectedTags.push(tag);
-    btn.style.background = '#000';
-    btn.style.color = '#ff0';
+    btn.classList.add('selected');
   }
   updateTagsDisplay();
 }
@@ -83,7 +84,8 @@ function addCustomTag() {
 }
 
 function updateTagsDisplay() {
-  document.getElementById('selected-tags').textContent = 'Tags: ' + (selectedTags.join(', ') || 'none');
+  document.getElementById('selected-tags').textContent = 
+    selectedTags.length ? 'Tags: ' + selectedTags.join(', ') : 'Selected tags: none';
   updatePreview();
 }
 
@@ -114,7 +116,8 @@ function updatePreview() {
   document.querySelectorAll('.thumb').forEach(img => {
     if (img.src && img.style.display !== 'none') html += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
   });
-  html += `</p><em>Tags: ${selectedTags.join(', ')}</em><br><a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
+  html += `<br><em>Tags: ${selectedTags.join(', ') || 'none'}</em>`;
+  html += `<br><a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
   document.getElementById('previewContent').innerHTML = html;
 }
 
@@ -134,7 +137,8 @@ function publish() {
       html += `<br><div style="text-align:center"><img src="images/${name}"></div><br>`;
     }
   });
-  html += `</p><em>Tags: ${selectedTags.join(', ')}</em><br><a href="index.html" class="back">Return to Law Book Links</a></body></html>`;
+  html += `<br><em>Tags: ${selectedTags.join(', ')}</em>`;
+  html += `<br><a href="index.html" class="back">Return to Law Book Links</a></body></html>`;
 
   let url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
   document.querySelectorAll('.image').forEach(input => {
