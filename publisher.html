@@ -4,15 +4,17 @@
 <meta charset="UTF-8">
 <title>Law Note Publisher</title>
 <style>
-  body {background:#ff0;margin:0;padding:10px;font-family:Arial;}
-  h1 {font-size:2.2em;text-align:center;margin:20px 0 80px 0;}
-  input,textarea,button {width:100%;padding:12px;margin:20px 0;font-size:1em;box-sizing:border-box;}
-  button {background:#000;color:#ff0;border:none;padding:20px;font-weight:bold;cursor:pointer;}
-  .section {border:3px solid #000;padding:30px;margin:30px 0;background:#fff;}
-  .thumb {max-width:50%;margin:40px auto;display:block;border:4px solid #000;box-shadow:6px 6px 0 #000;}
-  .delete-img {position:absolute;top:10px;right:10px;background:#c00;color:#fff;border:none;width:40px;height:40px;font-size:28px;cursor:pointer;}
-  .thumb-container {position:relative;display:block;text-align:center;}
-  #preview {background:#ff0;padding:40px;margin-top:50px;border:4px solid #000;}
+  body {background:#ff0; margin:0; padding:10px; font-family:Arial;}
+  h1 {font-size:2.2em; text-align:center; margin:20px 0 80px 0;}
+  input, textarea, button {width:100%; padding:12px; margin:20px 0; font-size:1em; box-sizing:border-box;}
+  button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
+  .section {border:3px solid #000; padding:30px; margin:30px 0; background:#fff;}
+  .add {background:#333; color:#ff0;}
+  .thumb {max-width:50%; margin:40px auto; display:block; border:4px solid #000; box-shadow:6px 6px 0 #000;}
+  .delete-img {position:absolute; top:10px; right:10px; background:#c00; color:#fff; border:none; width:40px; height:40px; font-size:28px; cursor:pointer;}
+  .thumb-container {position:relative; display:block; text-align:center;}
+  #preview {background:#ff0; padding:40px; margin-top:50px; border:4px solid #000;}
+  .preview h1 {margin-bottom:80px;}
 </style>
 </head>
 <body>
@@ -33,85 +35,143 @@
         <button class="delete-img" style="display:none;" onclick="deleteImage(this)">X</button>
       </div>
     </div>
-    <button onclick="addPhoto(this)">+ Add Another Photo</button>
+    <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
     
     <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
     <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
     
-    <button onclick="addSection()">+ Add Another Section</button>
+    <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
 </div>
 
-<button onclick="oneTapPublish()">PUBLISH — ONE TAP MAGIC</button>
+<button onclick="publish()">PUBLISH NEW PAGE</button>
 
-<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
+<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
 
 <script>
-// All your existing preview / add / delete functions stay exactly the same
+let imageCount = 0;
 
-async function oneTapPublish() {
-  const title = document.getElementById('title').value.trim() || "Untitled";
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + ".html";
+function addSection() {
+  imageCount = 0;
+  const clone = document.querySelector('.section').cloneNode(true);
+  clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
+  clone.querySelectorAll('.thumb, .delete-img').forEach(el => el.style.display = 'none');
+  document.getElementById('sections').appendChild(clone);
+  updatePreview();
+}
 
-  // Collect images
-  const images = [];
-  document.querySelectorAll('.image').forEach(input => {
-    if (input.files[0]) {
-      images.push({
-        file: input.files[0],
-        name: `img-${Date.now()}-${Math.random().toString(36).substr(2,6)}.jpg`
-      });
-    }
-  });
+function addPhoto(btn) {
+  imageCount++;
+  const container = document.createElement('div');
+  container.className = 'thumb-container';
+  container.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
+                        <img class="thumb" style="display:none;">
+                        <button class="delete-img" style="display:none;" onclick="deleteImage(this)">X</button>`;
+  btn.parentNode.insertBefore(container, btn);
+  updatePreview();
+}
 
-  // Build final HTML with real GitHub links
-  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin-bottom:80px;}.back{display:block;background:#fff;color:#000;padding:20px;margin:4em auto;font-size:1.6em;border:3px solid #000;text-decoration:none;max-width:500px;font-weight:bold;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;box-shadow:8px 8px 0 #000;}</style></head><body><h1>${title}</h1><p>`;
+function handleImage(input) {
+  const container = input.parentNode;
+  const img = container.querySelector('.thumb');
+  const del = container.querySelector('.delete-img');
+  if (input.files && input.files[0]) {
+    img.src = URL.createObjectURL(input.files[0]);
+    img.style.display = 'block';
+    del.style.display = 'block';
+  }
+  updatePreview();
+}
 
-  let imgIndex = 0;
+function deleteImage(btn) {
+  const container = btn.parentNode;
+  container.querySelector('.thumb').src = '';
+  container.querySelector('.thumb').style.display = 'none';
+  btn.style.display = 'none';
+  container.querySelector('input').value = '';
+  updatePreview();
+}
+
+function updatePreview() {
+  const title = document.getElementById('title').value.trim() || "Untitled Page";
+  let html = `<h1>${title}</h1><p>`;
+  
   document.querySelectorAll('.section').forEach(sec => {
-    const h = sec.querySelector('.header').value.trim();
-    const n = sec.querySelector('.note').value.trim();
-    const c = sec.querySelector('.cite').value.trim();
-    const s = sec.querySelector('.source').value.trim();
-    if (h) html += `<br><br><strong>${h}</strong><br>`;
-    if (n) html += n.replace(/\n/g,'<br><br>');
-    sec.querySelectorAll('.thumb').forEach(() => {
-      if (images[imgIndex]) {
-        html += `<br><div style="text-align:center"><img src="images/${images[imgIndex++].name}"></div><br>`;
+    const header = sec.querySelector('.header').value.trim();
+    const note = sec.querySelector('.note').value.trim();
+    const cite = sec.querySelector('.cite').value.trim();
+    const source = sec.querySelector('.source').value.trim();
+
+    if (header) html += `<br><br><strong>${header}</strong><br>`;
+    if (note) html += note.replace(/\n/g, '<br><br>');
+
+    sec.querySelectorAll('.thumb').forEach(img => {
+      if (img.src && img.style.display !== 'none') {
+        html += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
       }
     });
-    if (c || s) {
-      html += `<br><em>Citation: ${c||'—'}</em>`;
-      if (s) html += ` — <a href="${s}" target="_blank">Source</a>`;
+
+    if (cite || source) {
+      html += `<br><em>Citation: ${cite || '—'}</em>`;
+      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
       html += `<br><br>`;
     }
   });
 
-  html += `</p><a href="index.html" class="back">Return to Law Book Links</a></body></html>`;
+  html += `</p><a href="index.html" class="back">← Return to Law Book Links</a>`;
+  document.getElementById('previewContent').innerHTML = html;
+}
 
-  // ONE TAP — uploads page + ALL images to your GitHub in one go
-  const form = new FormData();
-  form.append('message', `Publish: ${title}`);
-  form.append('content', btoa(unescape(encodeURIComponent(html))));
-  form.append('branch', 'main');
-  images.forEach(img => {
-    form.append('file', img.file, `images/${img.name}`);
+function publish() {
+  const title = document.getElementById('title').value.trim() || "Untitled";
+  if (!title) return alert("Add a title first!");
+
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + ".html";
+
+  let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>
+  body {background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}
+  h1 {font-size:3em;text-align:center;margin-bottom:80px;}
+  .back {display:block;background:#fff;color:#000;text-align:center;padding:20px;margin:4em auto;font-size:1.6em;border:3px solid #000;text-decoration:none;max-width:500px;font-weight:bold;}
+  img {max-width:50%;margin:60px auto;display:block;border:4px solid #000;box-shadow:8px 8px 0 #000;}
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+<p>`;
+
+  document.querySelectorAll('.section').forEach(sec => {
+    const header = sec.querySelector('.header').value.trim();
+    const note = sec.querySelector('.note').value.trim();
+    const cite = sec.querySelector('.cite').value.trim();
+    const source = sec.querySelector('.source').value.trim();
+
+    if (header) html += `<br><br><strong>${header}</strong><br>`;
+    if (note) html += note.replace(/\n/g, '<br><br>');
+
+    sec.querySelectorAll('.thumb').forEach(img => {
+      if (img.src && img.style.display !== 'none') {
+        html += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
+      }
+    });
+
+    if (cite || source) {
+      html += `<br><em>Citation: ${cite || '—'}</em>`;
+      if (source) html += ` — <a href="${source}" target="_blank">Source</a>`;
+      html += `<br><br>`;
+    }
   });
 
-  // This uses a free, open-source GitHub-upload proxy (safe, no storage)
-  fetch('https://api.github.com/repos/iowacattails/my-law-notes/contents/${slug}', {
-    method: 'PUT',
-    headers: { Authorization: 'token YOUR_TOKEN_HERE' }, // we’ll add this in 30 seconds
-    body: JSON.stringify({
-      message: `Publish: ${title}`,
-      content: btoa(unescape(encodeURIComponent(html))),
-      branch: 'main'
-    })
-  })
-  .then(() => alert("Published! Page + all photos are live on your GitHub!"))
-  .catch(e => alert("Almost — we need your GitHub token — one-time 30-second setup"));
+  html += `</p><a href="index.html" class="back">← Return to Law Book Links</a></body>
+</html>`;
 
-  // After this one-time token setup, it’s truly one tap forever
+  const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
+  window.open(url, '_blank');
+  alert("GitHub opened — tap Commit to publish!");
 }
 </script>
 
