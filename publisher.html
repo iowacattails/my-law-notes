@@ -9,7 +9,12 @@
   input,textarea,button {width:100%;padding:15px;margin:10px 0;font-size:1.2em;box-sizing:border-box;}
   button {background:#000;color:#ff0;border:none;padding:25px;font-weight:bold;cursor:pointer;}
   .section {border:4px solid #000;padding:30px;margin:30px 0;background:#fff;}
-  .thumb {max-width:50%;margin:40px auto;display:block;border:4px solid #000;}
+  .thumb-container {position:relative;display:inline-block;margin:20px;}
+  .thumb {max-width:300px;border:4px solid #000;}
+  .delete-img {position:absolute;top:5px;right:5px;background:#c00;color:#fff;border:none;width:40px;height:40px;font-size:28px;cursor:pointer;}
+  .tag-btn {display:inline-block;background:#fff;color:#000;padding:10px 20px;margin:8px;border:3px solid #000;border-radius:10px;cursor:pointer;}
+  .tag-btn.selected {background:#000;color:#ff0;}
+  #selected-tags {margin:20px 0;font-weight:bold;font-size:1.3em;}
   #preview {background:#fff;padding:40px;margin-top:50px;border:4px solid #000;}
 </style>
 </head>
@@ -21,13 +26,24 @@
 
 <div id="sections">
   <div class="section">
-    <textarea rows="10" class="note" placeholder="Your note"></textarea>
-    <div style="text-align:center;margin:20px 0;">
-      <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-      <img class="thumb" style="display:none;">
-    </div>
-    <button onclick="addPhoto(this)">+ Add Another Photo</button>
+    <textarea rows="10" class="note" placeholder="Your note / quote"></textarea>
+    <div id="photo-area"></div>
+    <button onclick="addPhoto()">+ Add Photo</button>
   </div>
+</div>
+
+<div style="margin:40px 0;">
+  <strong>Tags (tap presets or type your own):</strong><br>
+  <span class="tag-btn" onclick="toggleTag(this)">Common Law</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Trial by Jury</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Natural Rights</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Due Process</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Magna Carta</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Abrogation</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Vattel</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Locke</span>
+  <input type="text" placeholder="Type + Enter" style="padding:10px;margin:10px;width:80%;font-size:1.2em;" onkeydown="if(event.key==='Enter')addCustom(this)">
+  <div id="selected-tags">Tags: none</div>
 </div>
 
 <button onclick="publish()">PUBLISH — ONE TAP</button>
@@ -35,31 +51,69 @@
 <div id="preview"><h2>Live Preview</h2><div id="previewContent"></div></div>
 
 <script>
-function addPhoto(b) {
-  const d=document.createElement('div'); d.style.textAlign='center'; d.style.margin='20px 0';
-  d.innerHTML=`<input type="file" accept="image/*" class="image" onchange="handleImage(this)"><img class="thumb" style="display:none;">`;
-  b.parentNode.insertBefore(d,b);
+let selectedTags = [];
+
+function toggleTag(el) {
+  const t = el.textContent.trim();
+  if (selectedTags.includes(t)) {
+    selectedTags = selectedTags.filter(x => x !== t);
+    el.classList.remove('selected');
+  } else {
+    selectedTags.push(t);
+    el.classList.add('selected');
+  }
+  updateTags();
 }
-function handleImage(i) { const m=i.nextElementSibling; if(i.files[0]) m.src=URL.createObjectURL(i.files[0]), m.style.display='block'; updatePreview(); }
+
+function addCustom(i) {
+  const t = i.value.trim();
+  if (t && !selectedTags.includes(t)) selectedTags.push(t), i.value = '';
+  updateTags();
+}
+
+function updateTags() {
+  document.getElementById('selected-tags').textContent = 'Tags: ' + (selectedTags.join(', ') || 'none');
+  updatePreview();
+}
+
+function addPhoto() {
+  const div = document.createElement('div');
+  div.className = 'thumb-container';
+  div.innerHTML = `<input type="file" accept="image/*" onchange="handleImage(this)">
+                   <img class="thumb" style="display:none;">
+                   <button class="delete-img" onclick="this.parentNode.remove()">X</button>`;
+  document.getElementById('photo-area').appendChild(div);
+}
+
+function handleImage(input) {
+  const img = input.nextElementSibling;
+  if (input.files[0]) {
+    img.src = URL.createObjectURL(input.files[0]);
+    img.style.display = 'block';
+  }
+  updatePreview();
+}
 
 function updatePreview() {
-  let h=`<h1>${document.getElementById('title').value||'Untitled'}</h1><p>`;
-  document.querySelectorAll('.note').forEach(n=>h+=n.value.trim().replace(/\n/g,'<br><br>')+'<br><br>');
-  document.querySelectorAll('.thumb').forEach(m=>m.src&&m.style.display!=='none'&& (h+=`<br><div style="text-align:center"><img src="${m.src}" style="max-width:50%;"></div><br>`));
-  h+=`<a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
-  document.getElementById('previewContent').innerHTML=h;
+  let h = `<h1>${document.getElementById('title').value || 'Untitled'}</h1><p>`;
+  document.querySelectorAll('.note').forEach(n => h += n.value.trim().replace(/\n/g,'<br><br>') + '<br><br>');
+  document.querySelectorAll('.thumb').forEach(img => img.src && img.style.display !== 'none' && (h += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`));
+  h += `<em>Tags: ${selectedTags.join(', ') || 'none'}</em>`;
+  h += `<br><a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
+  document.getElementById('previewContent').innerHTML = h;
 }
 
 async function publish() {
-  if(!document.getElementById('title').value.trim()) return alert("Add a title");
-  const f=new FormData();
-  f.append('title',document.getElementById('title').value.trim());
-  f.append('content',document.querySelector('.note').value);
-  document.querySelectorAll('.image').forEach(i=>i.files[0]&&f.append('images',i.files[0]));
-  const r=await fetch('https://grok-law-notes.vercel.app/api/publish', {method:'POST',body:f});
-  const d=await r.json();
-  if(r.ok) alert(`Published! "${d.title}" live with ${d.images} photos`), setTimeout(()=>location.reload(),4000);
-  else alert('Error: '+d.error);
+  if (!document.getElementById('title').value.trim()) return alert("Add a title");
+  const f = new FormData();
+  f.append('title', document.getElementById('title').value.trim());
+  f.append('content', document.querySelector('.note').value);
+  document.querySelectorAll('input[type=file]').forEach(i => i.files[0] && f.append('images', i.files[0]));
+  f.append('tags', selectedTags.join('|||'));
+  const r = await fetch('https://grok-law-notes.vercel.app/api/publish', {method:'POST',body:f});
+  const d = await r.json();
+  if (r.ok) alert(`Published! "${d.title}" live with ${d.images} photos`), setTimeout(()=>location.reload(),4000);
+  else alert('Error: ' + d.error);
 }
 </script>
 
