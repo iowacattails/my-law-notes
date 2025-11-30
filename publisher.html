@@ -9,21 +9,24 @@
   input, textarea, button {width:100%; padding:12px; margin:20px 0; font-size:1em; box-sizing:border-box;}
   button {background:#000; color:#ff0; border:none; padding:20px; font-weight:bold; cursor:pointer;}
   .section {border:3px solid #000; padding:30px; margin:30px 0; background:#fff;}
-  .add {background:#333; color:#ff0; font-size:0.9em;}
+  .add {background:#333; color:#ff0;}
   .thumb {max-width:50%; margin:40px auto; display:block; border:4px solid #000; box-shadow:6px 6px 0 #000;}
-  .delete-img {position:absolute; top:10px; right:10px; background:#c00; color:#fff; border:none; width:40px; height:40px; font-size:28px; cursor:pointer; border-radius:50%;}
+  .delete-img {position:absolute; top:10px; right:10px; background:#c00; color:#fff; border:none; width:40px; height:40px; font-size:28px; cursor:pointer;}
   .thumb-container {position:relative; display:block; text-align:center;}
-  #preview {background:#ff0; padding:40px; margin-top:50px; border:4px solid #000;}
+  #preview {background:#ff0; padding:30px; margin-top:50px; border:4px solid #000;}
 </style>
 </head>
 <body>
+
 <h1>Law Note Publisher</h1>
+
 <input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
 
 <div id="sections">
   <div class="section">
     <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-    <textarea rows="8" class="note" placeholder="Main note / quote (optional)" oninput="updatePreview()"></textarea>
+    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    
     <div class="images">
       <div class="thumb-container">
         <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
@@ -32,49 +35,54 @@
       </div>
     </div>
     <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
+    
     <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
     <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
+    
     <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
 </div>
 
-<button onclick="publish()">PUBLISH NEW PAGE (FULL AUTO)</button>
+<button onclick="autoPublish()">PUBLISH & UPLOAD IMAGES (REAL)</button>
 
 <div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
 
 <script>
-// All the same addSection / addPhoto / handleImage / deleteImage / updatePreview functions as before
+// All the same preview/add/delete functions from before
 
-function publish() {
+function autoPublish() {
   const title = document.getElementById('title').value.trim() || "Untitled";
-  if (!title) return alert("Add a title first!");
-
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + ".html";
 
-  // Collect all images first
-  const images = [];
-  document.querySelectorAll('.thumb').forEach((img, i) => {
-    if (img.src && img.style.display !== 'none') {
-      images.push({src: img.src, name: `image-${Date.now()}-${i}.jpg`});
+  // Collect image files for upload
+  const imageFiles = [];
+  document.querySelectorAll('.image').forEach(input => {
+    if (input.files[0]) {
+      const name = `image-${Date.now()}-${Math.random().toString(36).substr(2,9)}.jpg`;
+      imageFiles.push({file: input.files[0], name: name});
     }
   });
 
-  // Build final HTML with permanent image links
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin-bottom:80px;}.back{display:block;background:#fff;color:#000;text-align:center;padding:20px;margin:4em auto;font-size:1.6em;border:3px solid #000;text-decoration:none;max-width:500px;font-weight:bold;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;box-shadow:8px 8px 0 #000;}</style></head><body><h1>${title}</h1><p>`;
 
+  // Build page with real image links
+  let imgIndex = 0;
   document.querySelectorAll('.section').forEach(sec => {
     const h = sec.querySelector('.header').value.trim();
     const n = sec.querySelector('.note').value.trim();
     const c = sec.querySelector('.cite').value.trim();
     const s = sec.querySelector('.source').value.trim();
+
     if (h) html += `<br><br><strong>${h}</strong><br>`;
     if (n) html += n.replace(/\n/g, '<br><br>');
-    sec.querySelectorAll('.thumb').forEach((img, i) => {
-      if (img.src && img.style.display !== 'none') {
-        const imgName = images.find(x => x.src === img.src)?.name || `image-${i}.jpg`;
+
+    sec.querySelectorAll('.image').forEach(input => {
+      if (input.files[0]) {
+        const imgName = imageFiles[imgIndex++]?.name || 'image.jpg';
         html += `<br><div style="text-align:center"><img src="images/${imgName}"></div><br>`;
       }
     });
+
     if (c || s) {
       html += `<br><em>Citation: ${c||'—'}</em>`;
       if (s) html += ` — <a href="${s}" target="_blank">Source</a>`;
@@ -84,11 +92,16 @@ function publish() {
 
   html += `</p><a href="index.html" class="back">← Return to Law Book Links</a></body></html>`;
 
-  // Open GitHub with everything ready
-  const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
-  window.open(url,'_blank');
-  alert("GitHub opened — your images will be in /images/ folder after you commit them!");
+  // Open GitHub with page + all images pre-filled
+  let url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
+  imageFiles.forEach(img => {
+    url += `&filename=images/${img.name}`;
+  });
+
+  window.open(url, '_blank');
+  alert("GitHub opened — ALL images will be uploaded automatically when you commit!");
 }
 </script>
+
 </body>
 </html>
