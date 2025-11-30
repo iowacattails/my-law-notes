@@ -12,24 +12,24 @@
 <body>
 <h1>Notes & Historical Law Book Links<br><small>by Rob Logue</small></h1>
 
-<div id="buttons"></div>
+<div id="buttons">Loading your notes…</div>
 
 <script>
 fetch('pages.json')
   .then(r => r.json())
   .then(pages => {
-    const div = document.getElementById('buttons');
+    const container = document.getElementById('buttons');
+    container.innerHTML = '';
     pages.forEach(p => {
       const a = document.createElement('a');
       a.href = p.file;
       a.className = 'button';
       a.textContent = p.title;
-      div.appendChild(a);
-      div.appendChild(document.createElement('br'));
-      div.appendChild(document.createElement('br'));
+      container.appendChild(a);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement('br'));
     });
   });
 </script>
-
 </body>
 </html>
