@@ -10,10 +10,9 @@
   button {background:#000;color:#ff0;border:none;padding:25px;font-weight:bold;cursor:pointer;}
   .section {border:4px solid #000;padding:30px;margin:30px 0;background:#fff;}
   .thumb {max-width:50%;margin:40px auto;display:block;border:4px solid #000;}
-  .tag-btn {display:inline-block;background:#fff;color:#000;padding:10px 20px;margin:8px;border:3px solid #000;border-radius:10px;cursor:pointer;font-size:1.1em;}
+  .tag-btn {display:inline-block;background:#fff;color:#000;padding:10px 20px;margin:8px;border:3px solid #000;border-radius:10px;cursor:pointer;}
   .tag-btn.selected {background:#000;color:#ff0;}
-  .tag-input {width:100%;padding:15px;margin:20px 0;font-size:1.2em;}
-  #selected-tags {margin:20px 0;font-weight:bold;font-size:1.3em;}
+  #selected-tags {margin:20px 0;font-weight:bold;}
   #preview {background:#fff;padding:40px;margin-top:50px;border:4px solid #000;}
 </style>
 </head>
@@ -25,130 +24,74 @@
 
 <div id="sections">
   <div class="section">
-    <textarea rows="10" class="note" placeholder="Your note / quote"></textarea>
-    <div class="images">
-      <div style="text-align:center;margin:20px 0;">
-        <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-        <img class="thumb" style="display:none;">
-      </div>
+    <textarea rows="10" class="note" placeholder="Your note"></textarea>
+    <div style="text-align:center;margin:20px 0;">
+      <input type="file" accept="image/*" class="image" onchange="handleImage(this)">
+      <img class="thumb" style="display:none;">
     </div>
     <button onclick="addPhoto(this)">+ Add Another Photo</button>
   </div>
 </div>
 
-<div style="margin:50px 0;">
-  <strong>Tags (tap presets or type your own):</strong><br>
-  <div>
-    <span class="tag-btn" onclick="toggleTag(this)">Common Law</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Trial by Jury</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Natural Rights</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Due Process</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Magna Carta</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Abrogation</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Positive Law</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Vattel</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Locke</span>
-    <span class="tag-btn" onclick="toggleTag(this)">Germaine</span>
-  </div>
-  <input type="text" class="tag-input" id="custom-tag" placeholder="Type new tag + press Enter" onkeydown="if(event.key==='Enter') addCustomTag()">
-  <div id="selected-tags">Selected tags: none</div>
+<div style="margin:40px 0;">
+  <strong>Tags (tap or type):</strong><br>
+  <span class="tag-btn" onclick="toggleTag(this)">Common Law</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Trial by Jury</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Natural Rights</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Due Process</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Magna Carta</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Abrogation</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Vattel</span>
+  <span class="tag-btn" onclick="toggleTag(this)">Locke</span>
+  <input type="text" placeholder="Type + Enter" style="padding:10px;margin:10px;width:80%;font-size:1.2em;" onkeydown="if(event.key==='Enter')addCustom(this)">
+  <div id="selected-tags">Tags: none</div>
 </div>
 
-<button onclick="publish()">PUBLISH — ONE COMMIT</button>
+<button onclick="publish()">PUBLISH — ONE TAP</button>
 
 <div id="preview"><h2>Live Preview</h2><div id="previewContent"></div></div>
 
 <script>
-let selectedTags = [];
+let tags = [];
 
-function toggleTag(btn) {
-  const tag = btn.textContent.trim();
-  if (selectedTags.includes(tag)) {
-    selectedTags = selectedTags.filter(t => t !== tag);
-    btn.classList.remove('selected');
-  } else {
-    selectedTags.push(tag);
-    btn.classList.add('selected');
-  }
-  updateTagsDisplay();
-}
-
-function addCustomTag() {
-  const input = document.getElementById('custom-tag');
-  const tag = input.value.trim();
-  if (tag && !selectedTags.includes(tag)) {
-    selectedTags.push(tag);
-    input.value = '';
-    updateTagsDisplay();
-  }
-}
-
-function updateTagsDisplay() {
-  document.getElementById('selected-tags').textContent = 
-    selectedTags.length ? 'Tags: ' + selectedTags.join(', ') : 'Selected tags: none';
+function toggleTag(el) {
+  const t = el.textContent.trim();
+  if (tags.includes(t)) tags = tags.filter(x=>x!==t), el.classList.remove('selected');
+  else tags.push(t), el.classList.add('selected');
+  document.getElementById('selected-tags').textContent = 'Tags: ' + (tags.join(', ')||'none');
   updatePreview();
 }
+function addCustom(i) { const t=i.value.trim(); if(t && !tags.includes(t)) tags.push(t), i.value=''; updateTags(); updatePreview(); }
+function updateTags() { document.getElementById('selected-tags').textContent = 'Tags: ' + (tags.join(', ')||'none'); }
 
-function addPhoto(btn) {
-  const div = document.createElement('div');
-  div.style.textAlign = 'center';
-  div.style.margin = '20px 0';
-  div.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
-                   <img class="thumb" style="display:none;">`;
-  btn.parentNode.insertBefore(div, btn);
+function addPhoto(b) {
+  const d=document.createElement('div'); d.style.textAlign='center'; d.style.margin='20px 0';
+  d.innerHTML=`<input type="file" accept="image/*" class="image" onchange="handleImage(this)"><img class="thumb" style="display:none;">`;
+  b.parentNode.insertBefore(d,b);
 }
-
-function handleImage(input) {
-  const img = input.nextElementSibling;
-  if (input.files[0]) {
-    img.src = URL.createObjectURL(input.files[0]);
-    img.style.display = 'block';
-  }
-  updatePreview();
-}
+function handleImage(i) { const m=i.nextElementSibling; if(i.files[0]) m.src=URL.createObjectURL(i.files[0]), m.style.display='block'; updatePreview(); }
 
 function updatePreview() {
-  const title = document.getElementById('title').value || "Untitled";
-  let html = `<h1>${title}</h1><p>`;
-  document.querySelectorAll('.note').forEach(n => {
-    if (n.value.trim()) html += n.value.trim().replace(/\n/g,'<br><br>') + '<br><br>';
-  });
-  document.querySelectorAll('.thumb').forEach(img => {
-    if (img.src && img.style.display !== 'none') html += `<br><div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
-  });
-  html += `<br><em>Tags: ${selectedTags.join(', ') || 'none'}</em>`;
-  html += `<br><a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
-  document.getElementById('previewContent').innerHTML = html;
+  let h=`<h1>${document.getElementById('title').value||'Untitled'}</h1><p>`;
+  document.querySelectorAll('.note').forEach(n=>h+=n.value.trim().replace(/\n/g,'<br><br>')+'<br><br>');
+  document.querySelectorAll('.thumb').forEach(m=>m.src&&m.style.display!=='none'&& (h+=`<br><div style="text-align:center"><img src="${m.src}" style="max-width:50%;"></div><br>`));
+  h+=`<em>Tags: ${tags.join(', ')||'none'}</em><br>`;
+  h+=`<a href="index.html" style="display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;">Return to Law Book Links</a>`;
+  document.getElementById('previewContent').innerHTML=h;
 }
 
-function publish() {
-  if (!document.getElementById('title').value.trim()) return alert("Add a title first!");
-
-  const title = document.getElementById('title').value.trim();
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + ".html";
-
-  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin-bottom:80px;}.back{display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}</style></head><body><h1>${title}</h1><p>`;
-  document.querySelectorAll('.note').forEach(n => {
-    if (n.value.trim()) html += n.value.trim().replace(/\n/g,'<br><br>') + '<br><br>';
-  });
-  document.querySelectorAll('.thumb').forEach(img => {
-    if (img.src && img.style.display !== 'none') {
-      const name = `${slug.replace('.html','')}-pic-${Date.now()}.jpg`;
-      html += `<br><div style="text-align:center"><img src="images/${name}"></div><br>`;
-    }
-  });
-  html += `<br><em>Tags: ${selectedTags.join(', ')}</em>`;
-  html += `<br><a href="index.html" class="back">Return to Law Book Links</a></body></html>`;
-
-  let url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
-  document.querySelectorAll('.image').forEach(input => {
-    if (input.files[0]) url += `&filename=images/${slug.replace('.html','')}-pic-${Date.now()}.jpg`;
-  });
-
-  window.open(url,'_blank');
-  alert("GitHub opened — page + photos pre-filled. Tap Commit once → done!");
+async function publish() {
+  if(!document.getElementById('title').value.trim()) return alert("Add a title");
+  const f=new FormData();
+  f.append('title',document.getElementById('title').value.trim());
+  let text=''; document.querySelectorAll('.note').forEach(n=>text+=n.value+'\n\n'); f.append('content',text);
+  document.querySelectorAll('.image').forEach(i=>i.files[0]&&f.append('images',i.files[0]));
+  f.append('tags',tags.join('|||'));
+  const r=await fetch('https://my-law-notes.vercel.app/api/publish',{method:'POST',body:f});
+  const d=await r.json();
+  if(r.ok) alert(`Done! "${d.title}" live with ${d.images} photos`), setTimeout(()=>location.reload(),4000);
+  else alert('Error: '+d.error);
 }
 </script>
-
 </body>
 </html>
