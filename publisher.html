@@ -22,14 +22,14 @@
 
 <h1>Law Note Publisher</h1>
 
-<input type="text" id="title" placeholder="Page Title">
+<input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
 
 <div id="sections">
   <div class="section">
-    <input type="text" class="header" placeholder="Section Header (optional)">
-    <textarea rows="8" class="note" placeholder="Main note / quote"></textarea>
-    <div id="photos-0"></div>
-    <button onclick="addPhoto(0)">+ Add Photo to This Section</button>
+    <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
+    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    <div class="photos"></div>
+    <button onclick="addPhoto(this)">+ Add Photo to This Section</button>
     <button onclick="addSection()">+ Add Another Section</button>
   </div>
 </div>
@@ -54,7 +54,6 @@
 
 <script>
 let selectedTags = [];
-let sectionCount = 0;
 
 function toggleTag(el) {
   const t = el.textContent.trim();
@@ -68,13 +67,10 @@ function toggleTag(el) {
   updateTags();
 }
 
-function addCustom(input) {
-  const t = input.value.trim();
-  if (t && !selectedTags.includes(t)) {
-    selectedTags.push(t);
-    input.value = '';
-    updateTags();
-  }
+function addCustom(i) {
+  const t = i.value.trim();
+  if (t && !selectedTags.includes(t)) selectedTags.push(t), i.value = '';
+  updateTags();
 }
 
 function updateTags() {
@@ -83,30 +79,29 @@ function updateTags() {
 }
 
 function addSection() {
-  sectionCount++;
   const div = document.createElement('div');
   div.className = 'section';
   div.innerHTML = `
-    <input type="text" class="header" placeholder="Section Header (optional)">
-    <textarea rows="8" class="note" placeholder="Main note / quote"></textarea>
-    <div id="photos-${sectionCount}"></div>
-    <button onclick="addPhoto(${sectionCount})">+ Add Photo to This Section</button>
+    <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
+    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    <div class="photos"></div>
+    <button onclick="addPhoto(this)">+ Add Photo to This Section</button>
     <button onclick="this.parentNode.remove();updatePreview()">Delete This Section</button>
   `;
   document.getElementById('sections').appendChild(div);
   updatePreview();
 }
 
-function addPhoto(sectionId) {
-  const container = document.getElementById('photos-' + sectionId);
-  const div = document.createElement('div');
-  div.className = 'thumb-container';
-  div.innerHTML = `
+function addPhoto(btn) {
+  const photosDiv = btn.previousElementSibling;
+  const container = document.createElement('div');
+  container.className = 'thumb-container';
+  container.innerHTML = `
     <input type="file" accept="image/*" onchange="handleImage(this)">
     <img class="thumb" style="display:none;">
     <button class="delete-img" onclick="this.parentNode.remove();updatePreview()">X</button>
   `;
-  container.appendChild(div);
+  photosDiv.appendChild(container);
 }
 
 function handleImage(input) {
