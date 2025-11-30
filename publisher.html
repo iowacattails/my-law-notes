@@ -14,7 +14,6 @@
   .delete-img {position:absolute; top:10px; right:10px; background:#c00; color:#fff; border:none; width:40px; height:40px; font-size:28px; cursor:pointer;}
   .thumb-container {position:relative; display:block; text-align:center;}
   #preview {background:#ff0; padding:40px; margin-top:50px; border:4px solid #000;}
-  .preview h1 {margin-bottom:80px;}
 </style>
 </head>
 <body>
@@ -46,13 +45,12 @@
 
 <button onclick="publish()">PUBLISH NEW PAGE</button>
 
-<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing to see preview...</div></div>
+<div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
 
 <script>
-let imageCount = 0;
+let globalImageData = {}; // Store image data to persist across clones
 
 function addSection() {
-  imageCount = 0;
   const clone = document.querySelector('.section').cloneNode(true);
   clone.querySelectorAll('input, textarea').forEach(el => el.value = '');
   clone.querySelectorAll('.thumb, .delete-img').forEach(el => el.style.display = 'none');
@@ -61,7 +59,6 @@ function addSection() {
 }
 
 function addPhoto(btn) {
-  imageCount++;
   const container = document.createElement('div');
   container.className = 'thumb-container';
   container.innerHTML = `<input type="file" accept="image/*" class="image" onchange="handleImage(this)">
@@ -76,19 +73,24 @@ function handleImage(input) {
   const img = container.querySelector('.thumb');
   const del = container.querySelector('.delete-img');
   if (input.files && input.files[0]) {
-    img.src = URL.createObjectURL(input.files[0]);
+    const blobUrl = URL.createObjectURL(input.files[0]);
+    img.src = blobUrl;
     img.style.display = 'block';
     del.style.display = 'block';
+    globalImageData[blobUrl] = input.files[0]; // Save the file for persistence
   }
   updatePreview();
 }
 
 function deleteImage(btn) {
   const container = btn.parentNode;
-  container.querySelector('.thumb').src = '';
-  container.querySelector('.thumb').style.display = 'none';
+  const img = container.querySelector('.thumb');
+  URL.revokeObjectURL(img.src); // Clean up blob
+  img.src = '';
+  img.style.display = 'none';
   btn.style.display = 'none';
   container.querySelector('input').value = '';
+  delete globalImageData[img.src];
   updatePreview();
 }
 
