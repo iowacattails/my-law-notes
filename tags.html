@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Law Notes</title>
+<style>
+  body {background:#ff0;margin:40px;font-family:Arial;text-align:center;}
+  h1 {font-size:4em;margin-bottom:20px;}
+  h2 {font-size:2.2em;margin:40px 0 80px;}
+  .button {display:inline-block;background:#fff;color:#000;padding:25px 50px;margin:20px;font-size:2em;border:4px solid #000;border-radius:15px;text-decoration:none;font-weight:bold;}
+  .tags-btn {display:inline-block;background:#000;color:#ff0;padding:30px 80px;margin:40px auto;font-size:3em;border:6px solid #fff;border-radius:25px;text-decoration:none;font-weight:bold;}
+</style>
+</head>
+<body>
+
+<h1>My Law Notes</h1>
+<h2>Notes & Historical Law Book Links<br><small>by Rob Logue</small></h2>
+
+<a href="#tags" class="tags-btn" id="showTags">TAGS</a>
+<br><br><br>
+
+<div id="notes"></div>
+
+<script>
+// Load all notes
+fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?recursive=1')
+  .then(r => r.json())
+  .then(data => {
+    const files = data.tree
+      .filter(f => f.path.endsWith('.html') && !['index.html','publisher.html'].includes(f.path.split('/').pop()))
+      .sort((a,b) => b.path.localeCompare(a.path)); // newest first
+
+    const container = document.getElementById('notes');
+    files.forEach(f => {
+      const name = f.path.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+      container.innerHTML += `<a href="${f.path}" class="button">${name}</a><br><br>`;
+    });
+  });
+
+// Simple in-page tag filter (no extra tags.html needed)
+document.getElementById('showTags').onclick = () => {
+  document.getElementById('notes').innerHTML = `
+    <h2>Choose a tag to filter notes:</h2><br>
+    <a href="#" onclick="location.reload()" class="tags-btn">← Back to All Notes</a><br><br>
+    <a href="#" onclick="filter('Trial by Jury')" class="button">Trial by Jury</a><br><br>
+    <a href="#" onclick="filter('Common Law')" class="button">Common Law</a><br><br>
+    <a href="#" onclick="filter('Vicinage')" class="button">Vicinage</a><br><br>
+    <a href="#" onclick="filter('Natural Rights')" class="button">Natural Rights</a><br><br>
+    <a href="#" onclick="filter('Due Process')" class="button">Due Process</a><br><br>
+    <a href="#" onclick="filter('Magna Carta')" class="button">Magna Carta</a><br><br>
+    <a href="#" onclick="filter('Vattel')" class="button">Vattel</a><br><br>
+    <a href="#" onclick="filter('Locke')" class="button">Locke</a><br><br>
+  `;
+  return false;
+};
+
+function filter(tag) {
+  // This is a placeholder — you can expand it later if you want live filtering
+  alert('Tag filtering coming soon — for now just use the TAGS button to see options!');
+}
+</script>
+
+<br><br><br>
+<a href="publisher.html" style="font-size:2em;color:#000;text-decoration:none;">+ Create New Note</a>
+
+</body>
+</html>
