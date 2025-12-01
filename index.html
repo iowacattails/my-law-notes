@@ -19,23 +19,21 @@
 <a href="tags.html" class="tags-btn">TAGS</a>
 <br><br><br>
 
+<!-- Your real notes appear here automatically -->
 <div id="notes">
-  <!-- Your real notes will appear here automatically when you publish them -->
   <p>No notes yet — publish your first one!</p>
 </div>
 
 <script>
-// Auto-load only REAL .html files (no ghosts, no deleted pages)
 fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?recursive=1')
   .then(r => r.json())
   .then(data => {
     const files = data.tree
-      .filter(f => f.path.endsWith('.html') && 
-           !['index.html','publisher.html','tags.html'].includes(f.path.split('/').pop()))
+      .filter(f => f.path.endsWith('.html') && !['index.html','publisher.html','tags.html'].includes(f.path.split('/').pop()))
       .sort((a,b) => b.path.localeCompare(a.path)); // newest first
 
     const container = document.getElementById('notes');
-    container.innerHTML = ''; // clear placeholder
+    container.innerHTML = '';
 
     if (files.length === 0) {
       container.innerHTML = '<p>No notes yet — publish your first one!</p>';
@@ -46,9 +44,6 @@ fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?rec
       const name = f.path.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
       container.innerHTML += `<a href="${f.path}" class="button">${name}</a><br><br>`;
     });
-  })
-  .catch(() => {
-    document.getElementById('notes').innerHTML = '<p>Notes loading… (check internet)</p>';
   });
 </script>
 
