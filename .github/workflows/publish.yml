@@ -1,0 +1,43 @@
+name: One-Tap Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'Page Title'
+        required: true
+      content:
+        description: 'Note Content (text + images will be added automatically)'
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create the note page
+        run: |
+          TITLE="${{ inputs.title }}"
+          CONTENT='${{ inputs.content }}'
+          SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]//g' | tr -s '-' | sed 's/^-//;s/-$//').html
+
+          cat > "$SLUG" << EOF
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>$TITLE</title>
+<style>
+  body{background:#ff0;margin:40px;font-family:Arial;font-size:1.8em;line-height:1.8;max-width:900px;margin:40px auto;}
+  h1{font-size:3em;text-align:center;margin-bottom:80px;}
+  img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}
+  .back{display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;}
+</style></head>
+<body><h1>$TITLE</h1><p>$CONTENT</p>
+<a href="index.html" class="back">← Return to Law Book Links</a>
+</body></html>
+EOF
+
+          git config user.name "Publisher Bot"
+          git config user.email "bot@github.com"
+          git add "$SLUG"
+          git commit -m "Publish: $TITLE"
+          git push
