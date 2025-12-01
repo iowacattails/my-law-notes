@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Law Notes</title>
+<style>
+  body {background:#ff0;margin:40px;font-family:Arial;text-align:center;}
+  h1 {font-size:4em;margin-bottom:20px;}
+  h2 {font-size:2.2em;margin-bottom:80px;}
+  .button {display:inline-block;background:#fff;color:#000;padding:25px 50px;margin:20px;font-size:2em;border:4px solid #000;border-radius:15px;text-decoration:none;font-weight:bold;}
+  .tags-btn {display:inline-block;background:#000;color:#ff0;padding:30px 80px;margin:40px;font-size:3em;border:6px solid #fff;border-radius:25px;text-decoration:none;font-weight:bold;}
+</style>
+</head>
+<body>
+
+<h1>My Law Notes</h1>
+<h2>Notes & Historical Law Book Links<br><small>by Rob Logue</small></h2>
+
+<a href="tags.html" class="tags-btn">TAGS</a>
+<br><br><br>
+
+<div id="notes">
+  <!-- Your real notes will appear here automatically when you publish them -->
+  <p>No notes yet — publish your first one!</p>
+</div>
+
+<script>
+// Auto-load only REAL .html files (no ghosts, no deleted pages)
+fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?recursive=1')
+  .then(r => r.json())
+  .then(data => {
+    const files = data.tree
+      .filter(f => f.path.endsWith('.html') && 
+           !['index.html','publisher.html','tags.html'].includes(f.path.split('/').pop()))
+      .sort((a,b) => b.path.localeCompare(a.path)); // newest first
+
+    const container = document.getElementById('notes');
+    container.innerHTML = ''; // clear placeholder
+
+    if (files.length === 0) {
+      container.innerHTML = '<p>No notes yet — publish your first one!</p>';
+      return;
+    }
+
+    files.forEach(f => {
+      const name = f.path.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+      container.innerHTML += `<a href="${f.path}" class="button">${name}</a><br><br>`;
+    });
+  })
+  .catch(() => {
+    document.getElementById('notes').innerHTML = '<p>Notes loading… (check internet)</p>';
+  });
+</script>
+
+<br><br><br>
+<a href="publisher.html" style="font-size:2em;color:#000;text-decoration:none;">+ Create New Note</a>
+
+</body>
+</html>
