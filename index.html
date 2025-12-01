@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <title>My Law Notes</title>
 <style>
-  body {background:#ff0;margin:40px;font-family:Arial;text-align:center;}
-  h1 {font-size:4em;margin-bottom:20px;}
-  h2 {font-size:2em;margin-bottom:60px;}
-  .button {display:inline-block;background:#fff;color:#000;padding:25px 50px;margin:20px;font-size:2em;border:4px solid #000;border-radius:15px;text-decoration:none;font-weight:bold;}
-  .tagbutton {display:inline-block;background:#000;color:#ff0;padding:30px 80px;margin:40px;font-size:2.8em;border:6px solid #fff;border-radius:25px;text-decoration:none;font-weight:bold;}
+  body {background:#ff0; margin:40px; font-family:Arial; text-align:center;}
+  h1 {font-size:4em; margin-bottom:20px;}
+  h2 {font-size:2.2em; margin-bottom:80px;}
+  .button {display:inline-block; background:#fff; color:#000; padding:25px 50px; margin:20px; font-size:2em; border:4px solid #000; border-radius:15px; text-decoration:none; font-weight:bold;}
+  .tags-btn {display:inline-block; background:#000; color:#ff0; padding:30px 80px; margin:40px; font-size:3em; border:6px solid #fff; border-radius:25px; text-decoration:none; font-weight:bold;}
 </style>
 </head>
 <body>
@@ -16,28 +16,39 @@
 <h1>My Law Notes</h1>
 <h2>Notes & Historical Law Book Links<br><small>by Rob Logue</small></h2>
 
-<!-- TAGS BUTTON -->
-<a href="tags.html" class="tagbutton">TAGS</a>
-<br><br><br><br>
+<a href="#tags" class="tags-btn" onclick="toggleTags()">TAGS</a>
+<br><br><br>
 
-<!-- AUTO-UPDATING LIST OF ALL NOTES -->
-<script>
-fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?recursive=1')
-  .then(r => r.json())
-  .then(data => {
-    const files = data.tree
-      .filter(f => f.path.endsWith('.html') && !['index.html','publisher.html','tags.html'].includes(f.path.split('/').pop()))
-      .sort((a,b) => a.path.localeCompare(b.path));
+<div id="notes">
+<a href="petitions.html" class="button">Petitions</a><br><br>
+<a href="jury-of-vicinage.html" class="button">Jury Of Vicinage</a><br><br>
+<a href="discovery.html" class="button">Discovery</a><br><br>
+<a href="test4.html" class="button">Test4</a><br><br>
+<a href="try2.html" class="button">Try2</a><br><br>
+</div>
 
-    files.forEach(file => {
-      const name = file.path.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase());
-      document.write(`<a href="${file.path}" class="button">${name}</a><br><br>`);
-    });
-  });
-</script>
+<div id="tags" style="display:none;">
+<h2>Tags (coming soon)</h2>
+<a href="#" onclick="toggleTags()" class="tags-btn">← Back to Notes</a>
+<p>Tag system auto-updates when you publish notes with tags.</p>
+</div>
 
 <br><br><br>
-<a href="publisher.html" style="font-size:2em;color:#000;text-decoration:none;">+ Create New Note</a>
+<a href="publisher.html" style="font-size:2em; color:#000; text-decoration:none;">+ Create New Note</a>
+
+<script>
+function toggleTags() {
+  const notes = document.getElementById('notes');
+  const tags = document.getElementById('tags');
+  if (notes.style.display !== 'none') {
+    notes.style.display = 'none';
+    tags.style.display = 'block';
+  } else {
+    notes.style.display = 'block';
+    tags.style.display = 'none';
+  }
+}
+</script>
 
 </body>
 </html>
