@@ -5,8 +5,8 @@
 <title>Law Note Publisher</title>
 <style>
   body{background:#ff0;padding:20px;font-family:Arial;}
-  h1{font-size:2.5em;text-align:center;margin-bottom:40px;}
-  input,textarea,button{width:100%;padding:15px;margin:10px 0;font-size:1.2em;box-sizing:border-box;}
+  h1{font-size:2.5em;text-align:center;margin-bottom: ║
+  input,textarea,button{width:100%;padding:15px;margin:10px 0;font-size:1.2em;}
   button{background:#000;color:#ff0;border:none;padding:25px;font-weight:bold;cursor:pointer;}
   #commit-img{background:#c00;color:#fff;}
   .section{border:4px solid #000;padding:30px;margin:30px 0;background:#fff;}
@@ -16,19 +16,19 @@
   #preview{background:#fff;padding:40px;margin-top:50px;border:4px solid #000;}
 </style>
 </head>
-<body>
+<body onload="loadDraft()">
 <h1>Law Note Publisher</h1>
 
-<input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
+<input type="text" id="title" placeholder="Page Title" oninput="saveDraft();updatePreview()">
 
 <div id="sections">
   <div class="section">
-    <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
+    <input type="text" class="header" placeholder="Section Header (optional)" oninput="saveDraft();updatePreview()">
+    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="saveDraft();updatePreview()"></textarea>
     <div class="images"></div>
     <button class="add" onclick="addPhoto(this)">+ Add Photo</button>
-    <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
-    <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
+    <input type="text" class="cite" placeholder="Citation (optional)" oninput="saveDraft();updatePreview()">
+    <input type="url" class="source" placeholder="Source URL (optional)" oninput="saveDraft();updatePreview()">
     <button class="add" onclick="addSection()">+ Add Another Section</button>
   </div>
 </div>
@@ -50,24 +50,22 @@
 
 <script>
 let tags=[];
-function toggle(el){const t=el.textContent.trim();if(tags.includes(t))tags=tags.filter(x=>x!==t),el.classList.remove('selected');else tags.push(t),el.classList.add('selected');document.getElementById('tags').textContent='Tags: '+tags.join(', ')||'none';updatePreview()}
-function addCustom(i){const t=i.value.trim();if(t)tags.push(t),i.value='';document.getElementById('tags').textContent='Tags: '+tags.join(', ')||'none';updatePreview()}
+function toggle(el){const t=el.textContent.trim();if(tags.includes(t))tags=tags.filter(x=>x!==t),el.classList.remove('selected');else tags.push(t),el.classList.add('selected');document.getElementById('tags').textContent='Tags: '+tags.join(', ')||'none';saveDraft();updatePreview()}
+function addCustom(i){const t=i.value.trim();if(t)tags.push(t),i.value='';document.getElementById('tags').textContent='Tags: '+tags.join(', ')||'none';saveDraft();updatePreview()}
 
-function addSection(){
-  const div=document.createElement('div');div.className='section';div.innerHTML=`
-    <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-    <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()">
-    <div class="images"></div>
-    <button class="add" onclick="addPhoto(this)">+ Add Photo</button>
-    <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
-    <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
-    <button class="add" onclick="addSection()">+ Add Another Section</button>
-  `;document.getElementById('sections').appendChild(div);updatePreview()
-}
+function addSection(){const div=document.createElement('div');div.className='section';div.innerHTML=`
+<input type="text" class="header" placeholder="Section Header (optional)" oninput="saveDraft();updatePreview()">
+<textarea rows="8" class="note" placeholder="Main note / quote" oninput="saveDraft();updatePreview()">
+<div class="images"></div>
+<button class="add" onclick="addPhoto(this)">+ Add Photo</button>
+<input type="text" class="cite" placeholder="Citation (optional)" oninput="saveDraft();updatePreview()">
+<input type="url" class="source" placeholder="Source URL (optional)" oninput="saveDraft();updatePreview()">
+<button class="add" onclick="addSection()">+ Add Another Section</button>
+`;document.getElementById('sections').appendChild(div);updatePreview()}
 
 function addPhoto(btn){
   const images=btn.parentNode.querySelector('.images');
-  const c=document.createElement('div');c.innerHTML=`<input type="file" accept="image/*"><img class="thumb" style="display:none;"><button onclick="this.parentNode.remove()">X</button>`;
+  const c=document.createElement('div');c.innerHTML=`<input type="file" accept="image/*"><img class="thumb" style="display:none;"><button onclick="this.parentNode.remove();saveDraft()">X</button>`;
   c.querySelector('input').onchange=e=>{
     if(e.target.files[0]){
       const reader=new FileReader();
@@ -92,8 +90,8 @@ function commitImages(){
       if(name) window.open(`https://github.com/iowacattails/my-law-notes/upload/main/images?filename=${name}`,'_blank');
     }
   });
-  if(count===0) alert("No images to commit!");
-  else alert(`${count} image tab(s) opened — commit them, then PUBLISH the page`);
+  if(count===0) alert("No images!");
+  else alert(`${count} image tab(s) opened — commit them, then PUBLISH`);
 }
 
 function updatePreview(){
@@ -104,15 +102,10 @@ function updatePreview(){
     const n=sec.querySelector('.note').value.trim();
     const c=sec.querySelector('.cite').value.trim();
     const s=sec.querySelector('.source').value.trim();
-    if(h) html+=`<strong>${h}</strong><br><br>`;
-    if(n) html+=n.replace(/\n/g,'<br><br>')+'<br><br>';
-    sec.querySelectorAll('.thumb').forEach((img,i)=>{
-      if(img.src){
-        const slugTitle=title.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-        html+=`<div style="text-align:center"><img src="images/${slugTitle}-${i+1}.jpg" style="max-width:50%;"></div><br>`;
-      }
-    });
-    if(c||s){html+=`<em>Citation: ${c||'—'}`;if(s) html+=` — <a href="${s}" target="_blank">Source</a>`;html+=`</em><br><br>`}
+    if(h)html+=`<strong>${h}</strong><br><br>`;
+    if(n)html+=n.replace(/\n/g,'<br><br>')+'<br><br>';
+    sec.querySelectorAll('.thumb').forEach((img,i)=>{if(img.src)html+=`<div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`});
+    if(c||s){html+=`<em>Citation: ${c||'—'}`;if(s)html+=` — <a href="${s}" target="_blank">Source</a>`;html+=`</em><br><br>`}
   });
   html+=`<em>Tags: ${tags.join(', ')||'none'}</em><br>`;
   html+=`<a href="index.html" style="background:#fff;color:#000;padding:30px;display:block;border:4px solid #000;">← Return to Law Book Links</a>`;
@@ -127,23 +120,17 @@ function publish(){
   document.querySelectorAll('.section').forEach(sec=>{
     const h=sec.querySelector('.header').value.trim();
     const n=sec.querySelector('.note').value.trim();
-    const c=sec.querySelector('.cite').value.trim();
-    const s=sec.querySelector('.source').value.trim();
     if(h)html+=`<strong>${h}</strong><br><br>`;
     if(n)html+=n.replace(/\n/g,'<br><br>')+'<br><br>';
-    sec.querySelectorAll('.thumb').forEach((img,i)=>{
-      if(img.src){
-        count++;
-        const name=`${slug.replace('.html','')}-${count}.jpg`;
-        html+=`<div style="text-align:center"><img src="images/${name}"></div><br>`;
-      }
-    });
-    if(c||s){html+=`<em>Citation: ${c||'—'}`;if(s) html+=` — <a href="${s}" target="_blank">Source</a>`;html+=`</em><br><br>`}
+    sec.querySelectorAll('.thumb').forEach(img=>{if(img.src){count++;const name=`${slug.replace('.html','')}-${count}.jpg`;html+=`<div style="text-align:center"><img src="images/${name}"></div><br>`}});
   });
   html+=`<em>Tags: ${tags.join(', ')||'none'}</em><br>`;
   html+=`<a href="index.html" style="background:#fff;color:#000;padding:30px;display:block;border:4px solid #000;">← Return to Law Book Links</a></body></html>`;
   window.open(`https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`,'_blank');
 }
+
+function saveDraft(){localStorage.draft=JSON.stringify({title:document.getElementById('title').value,tags:tags,sections:Array.from(document.querySelectorAll('.section')).map(s=>({header:s.querySelector('.header').value,note:s.querySelector('.note').value,cite:s.querySelector('.cite').value,source:s.querySelector('.source').value}))})}
+function loadDraft(){if(localStorage.draft){const d=JSON.parse(localStorage.draft);document.getElementById('title').value=d.title;tags=d.tags||[];updatePreview()}}
 updatePreview();
 </script>
 </body>
