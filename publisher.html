@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <title>Law Note Publisher</title>
 <style>
-  body {background:#ff0;margin:0;padding:20px;font-family:Arial;}
-  h1 {font-size:2.5em;text-align:center;margin:40px 0;}
+  body{background:#ff0;margin:0;padding:20px;font-family:Arial;}
+  h1{font-size:2.5em;text-align:center;margin:40px 0;}
   input,textarea,button{width:100%;padding:15px;margin:10px 0;font-size:1.2em;box-sizing:border-box;}
   button{background:#000;color:#ff0;border:none;padding:25px;font-weight:bold;cursor:pointer;}
   .section{border:4px solid #000;padding:30px;margin:30px 0;background:#fff;}
@@ -14,146 +14,98 @@
   .tag-btn.selected{background:#000;color:#ff0;}
   #selected-tags{margin:20px 0;font-weight:bold;font-size:1.3em;}
   #preview{background:#fff;padding:40px;margin-top:50px;border:4px solid #000;}
-  #edit-mode{background:#ffff99;padding:20px;margin:20px 0;border:3px solid #000;border-radius:10px;}
 </style>
 </head>
 <body>
 
 <h1>Law Note Publisher</h1>
 
-<div id="edit-mode">
-  <input type="text" id="edit-slug" placeholder="Load page to edit (e.g. test.html)" style="font-size:1.4em;padding:15px;">
-  <small>Type filename and press Return</small>
-</div>
-
 <input type="text" id="title" placeholder="Page Title" oninput="updatePreview()">
 
 <div id="sections">
   <div class="section">
-    <input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
     <textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
     <div class="images"></div>
-    <button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
-    <input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
-    <input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
-    <button class="add" onclick="addSection()">+ Add Another Section</button>
+    <button class="add" onclick="addPhoto(this)">+ Add Photo</button>
   </div>
 </div>
 
 <div style="margin:50px 0;">
-  <strong>Tags (tap presets or type your own):</strong><br>
+  <strong>Tags:</strong><br>
   <span class="tag-btn" onclick="toggleTag(this)">Common Law</span>
   <span class="tag-btn" onclick="toggleTag(this)">Trial by Jury</span>
   <span class="tag-btn" onclick="toggleTag(this)">Natural Rights</span>
   <span class="tag-btn" onclick="toggleTag(this)">Due Process</span>
   <span class="tag-btn" onclick="toggleTag(this)">Magna Carta</span>
-  <span class="tag-btn" onclick="toggleTag(this)">Abrogation</span>
   <span class="tag-btn" onclick="toggleTag(this)">Vattel</span>
   <span class="tag-btn" onclick="toggleTag(this)">Locke</span>
-  <input type="text" placeholder="Type tag + Return" style="padding:12px;margin:10px;width:80%;font-size:1.2em;" onkeydown="if(event.key==='Enter'||event.key==='Return')addCustom(this)">
   <div id="selected-tags">Tags: none</div>
 </div>
 
-<button onclick="publishImageFirst()">PUBLISH IMAGE FIRST</button>
-<button onclick="publishPage()">PUBLISH PAGE</button>
+<button onclick="publish()">PUBLISH PAGE + IMAGE</button>
 
 <div id="preview"><h2>Live Preview</h2><div id="previewContent">Start typing...</div></div>
 
 <script>
 let selectedTags = [];
-let currentImages = [];
+let imageCount = 0;
 
-function toggleTag(el){const t=el.textContent.trim();if(selectedTags.includes(t)){selectedTags=selectedTags.filter(x=>x!==t);el.classList.remove('selected')}else{selectedTags.push(t);el.classList.add('selected')}updateTags()}
-function addCustom(i){const t=i.value.trim();if(t&&!selectedTags.includes(t)){selectedTags.push(t);i.value=''}updateTags()}
-function updateTags(){document.getElementById('selected-tags').textContent='Tags: '+(selectedTags.join(', ')||'none');updatePreview()}
-
-function addSection(){const div=document.createElement('div');div.className='section';div.innerHTML=`
-<input type="text" class="header" placeholder="Section Header (optional)" oninput="updatePreview()">
-<textarea rows="8" class="note" placeholder="Main note / quote" oninput="updatePreview()"></textarea>
-<div class="images"></div>
-<button class="add" onclick="addPhoto(this)">+ Add Another Photo</button>
-<input type="text" class="cite" placeholder="Citation (optional)" oninput="updatePreview()">
-<input type="url" class="source" placeholder="Source URL (optional)" oninput="updatePreview()">
-<button class="add" onclick="addSection()">+ Add Another Section</button>
-`;document.getElementById('sections').appendChild(div);updatePreview()}
-
-function addPhoto(btn){const images=btn.previousElementSibling;const c=document.createElement('div');c.className='thumb-container';c.innerHTML=`<input type="file" accept="image/*" onchange="handleImage(this)">
-<img class="thumb" style="display:none;">
-<button class="delete-img" style="display:none;" onclick="deleteImage(this)">X</button>`;images.appendChild(c)}
-
-function handleImage(input){
-  const c=input.parentNode;const img=c.querySelector('.thumb');const del=c.querySelector('.delete-img');
-  if(input.files&&input.files[0]){
-    const reader=new FileReader();reader.onload=e=>{
-      img.src=e.target.result;img.style.display='block';del.style.display='block';
-      currentImages.push({file:input.files[0],data:e.target.result});
-    };reader.readAsDataURL(input.files[0]);
-  }
+function toggleTag(el){
+  const t=el.textContent.trim();
+  if(selectedTags.includes(t)) selectedTags=selectedTags.filter(x=>x!==t),el.classList.remove('selected');
+  else selectedTags.push(t),el.classList.add('selected');
+  document.getElementById('selected-tags').textContent='Tags: '+(selectedTags.join(', ')||'none');
   updatePreview();
 }
 
-function deleteImage(btn){
-  const c=btn.parentNode;const img=c.querySelector('.thumb');
-  if(img.src.startsWith('data:')) URL.revokeObjectURL(img.src);
-  img.src='';img.style.display='none';btn.style.display='none';
-  c.querySelector('input').value='';
-  currentImages=currentImages.filter(x=>x.data!==img.src);
+function addPhoto(btn){
+  const div=btn.parentNode.querySelector('.images');
+  const c=document.createElement('div');
+  c.innerHTML=`<input type="file" accept="image/*"><img class="thumb" style="display:none;"><button onclick="this.parentNode.remove()">X</button>`;
+  c.querySelector('input').onchange=e=>{
+    if(e.target.files[0]){
+      const reader=new FileReader();
+      reader.onload=r=>{
+        c.querySelector('.thumb').src=r.target.result;
+        c.querySelector('.thumb').style.display='block';
+        imageCount++;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+  div.appendChild(c);
   updatePreview();
 }
 
 function updatePreview(){
   const title=document.getElementById('title').value.trim()|| "Untitled";
   let html=`<h1>${title}</h1><p>`;
-  document.querySelectorAll('.section').forEach(sec=>{
-    const header=sec.querySelector('.header').value.trim();
-    const note=sec.querySelector('.note').value.trim();
-    if(header) html+=`<strong>${header}</strong><br><br>`;
-    if(note) html+=note.replace(/\n/g,'<br><br>')+'<br><br>';
-    sec.querySelectorAll('.thumb').forEach((img,i)=>{
-      if(img.src&&img.style.display!=='none'){
-        const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-        html+=`<div style="text-align:center"><img src="images/${slug}-${i+1}.jpg" style="max-width:50%;"></div><br>`;
-      }
-    });
+  document.querySelectorAll('.note').forEach(n=>html+=n.value.replace(/\n/g,'<br><br>')+'<br><br>');
+  document.querySelectorAll('.thumb').forEach((img,i)=>{
+    if(img.src) html+=`<div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
   });
-  html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em>`;
-  html+=`<br><a href="index.html" class="back">← Return to Law Book Links</a>`;
+  html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em><br>`;
+  html+=`<a href="index.html" style="background:#fff;color:#000;padding:20px;display:inline-block;border:4px solid #000;">← Return to Law Book Links</a>`;
   document.getElementById('previewContent').innerHTML=html;
 }
 
-function publishImageFirst(){
-  if(currentImages.length===0) return alert("Add a photo first!");
+function publish(){
   const title=document.getElementById('title').value.trim()|| "untitled";
-  const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-  currentImages.forEach((img,i)=>{
-    const name=`${slug}-${i+1}.jpg`;
-    const url=`https://github.com/iowacattails/my-law-notes/upload/main/images?filename=${name}`;
-    window.open(url,'_blank');
-  });
-  alert("Image upload tab(s) opened — commit the image(s) first!");
-}
-
-function publishPage(){
-  const title=document.getElementById('title').value.trim()|| "Untitled";
   const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.html';
-  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Georgia;font-size:2.2em;line-height:2.1;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin-bottom:80px;}.back{display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}</style></head><body><h1>${title}</h1><p>`;
-  document.querySelectorAll('.section').forEach(sec=>{
-    const header=sec.querySelector('.header').value.trim();
-    const note=sec.querySelector('.note').value.trim();
-    if(header) html+=`<strong>${header}</strong><br><br>`;
-    if(note) html+=note.replace(/\n/g,'<br><br>')+'<br><br>';
-    sec.querySelectorAll('.thumb').forEach((img,i)=>{
-      if(img.src&&img.style.display!=='none'){
-        const slugTitle=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-        html+=`<div style="text-align:center"><img src="images/${slugTitle}-${i+1}.jpg" style="max-width:50%;"></div><br>`;
-      }
-    });
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Georgia;font-size:2.2em;line-height:2.1;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}</style></head><body><h1>${title}</h1><p>`;
+  document.querySelectorAll('.note').forEach(n=>html+=n.value.replace(/\n/g,'<br><br>')+'<br><br>');
+  document.querySelectorAll('.thumb').forEach((img,i)=>{
+    if(img.src&&img.src.startsWith('data:')){
+      const name=`${slug.replace('.html','')}-${i+1}.jpg`;
+      html+=`<div style="text-align:center"><img src="images/${name}" style="max-width:50%;"></div><br>`;
+    }
   });
-  html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em>`;
-  html+=`<br><a href="index.html" class="back">← Return to Law Book Links</a></body></html>`;
+  html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em><br>`;
+  html+=`<a href="index.html" style="background:#fff;color:#000;padding:30px;display:inline-block;border:4px solid #000;">← Return to Law Book Links</a></body></html>`;
+
   const url=`https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
   window.open(url,'_blank');
-  alert("Page tab opened — commit the image(s) first, then this page!");
+  alert("Page opened — after committing, manually upload images to /images/ with matching names (e.g. your-title-1.jpg)");
 }
 </script>
 </body>
