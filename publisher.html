@@ -61,7 +61,7 @@
 
 <script>
 let selectedTags = [];
-let imageUrls = [];
+let currentImages = [];
 
 function toggleTag(el){const t=el.textContent.trim();if(selectedTags.includes(t)){selectedTags=selectedTags.filter(x=>x!==t);el.classList.remove('selected')}else{selectedTags.push(t);el.classList.add('selected')}updateTags()}
 function addCustom(i){const t=i.value.trim();if(t&&!selectedTags.includes(t)){selectedTags.push(t);i.value=''}updateTags()}
@@ -86,7 +86,7 @@ function handleImage(input){
   if(input.files&&input.files[0]){
     const reader=new FileReader();reader.onload=e=>{
       img.src=e.target.result;img.style.display='block';del.style.display='block';
-      imageUrls.push({file:input.files[0],data:e.target.result});
+      currentImages.push({file:input.files[0],data:e.target.result});
     };reader.readAsDataURL(input.files[0]);
   }
   updatePreview();
@@ -97,7 +97,7 @@ function deleteImage(btn){
   if(img.src.startsWith('data:')) URL.revokeObjectURL(img.src);
   img.src='';img.style.display='none';btn.style.display='none';
   c.querySelector('input').value='';
-  imageUrls=imageUrls.filter(x=>x.data!==img.src);
+  currentImages=currentImages.filter(x=>x.data!==img.src);
   updatePreview();
 }
 
@@ -109,8 +109,11 @@ function updatePreview(){
     const note=sec.querySelector('.note').value.trim();
     if(header) html+=`<strong>${header}</strong><br><br>`;
     if(note) html+=note.replace(/\n/g,'<br><br>')+'<br><br>';
-    sec.querySelectorAll('.thumb').forEach(img=>{
-      if(img.src&&img.style.display!=='none') html+=`<div style="text-align:center"><img src="${img.src}" style="max-width:50%;"></div><br>`;
+    sec.querySelectorAll('.thumb').forEach((img,i)=>{
+      if(img.src&&img.style.display!=='none'){
+        const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+        html+=`<div style="text-align:center"><img src="images/${slug}-${i+1}.jpg" style="max-width:50%;"></div><br>`;
+      }
     });
   });
   html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em>`;
@@ -119,22 +122,21 @@ function updatePreview(){
 }
 
 function publishImageFirst(){
-  if(imageUrls.length===0) return alert("Add a photo first!");
+  if(currentImages.length===0) return alert("Add a photo first!");
   const title=document.getElementById('title').value.trim()|| "untitled";
   const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-  imageUrls.forEach((img,i)=>{
+  currentImages.forEach((img,i)=>{
     const name=`${slug}-${i+1}.jpg`;
-    const url=`https://github.com/iowacattails/my-law-notes/new/main/images?filename=${name}&value=${encodeURIComponent(img.data)}`;
+    const url=`https://github.com/iowacattails/my-law-notes/upload/main/images?filename=${name}`;
     window.open(url,'_blank');
   });
-  alert("Image tab(s) opened — commit them first!");
+  alert("Image upload tab(s) opened — commit the image(s) first!");
 }
 
 function publishPage(){
   const title=document.getElementById('title').value.trim()|| "Untitled";
   const slug=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'.html';
   let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#ff0;margin:40px;font-family:Georgia;font-size:2.2em;line-height:2.1;max-width:900px;margin:40px auto;}h1{font-size:3em;text-align:center;margin-bottom:80px;}.back{display:block;background:#fff;color:#000;padding:30px;margin:60px auto;font-size:1.8em;border:4px solid #000;text-decoration:none;max-width:600px;text-align:center;font-weight:bold;}img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}</style></head><body><h1>${title}</h1><p>`;
-
   document.querySelectorAll('.section').forEach(sec=>{
     const header=sec.querySelector('.header').value.trim();
     const note=sec.querySelector('.note').value.trim();
@@ -149,7 +151,6 @@ function publishPage(){
   });
   html+=`<em>Tags: ${selectedTags.join(', ')||'none'}</em>`;
   html+=`<br><a href="index.html" class="back">← Return to Law Book Links</a></body></html>`;
-
   const url=`https://github.com/iowacattails/my-law-notes/new/main?filename=${slug}&value=${encodeURIComponent(html)}`;
   window.open(url,'_blank');
   alert("Page tab opened — commit the image(s) first, then this page!");
