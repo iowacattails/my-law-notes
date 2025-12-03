@@ -1,133 +1,225 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Law Notes Publisher</title>
-  <meta charset="utf-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Law Notes</title>
   <style>
-    body { font-family: Arial; background: #ffffe0; padding: 20px; max-width: 900px; margin: auto; }
-    input, textarea { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
-    button { background: black; color: white; padding: 10px 20px; margin: 5px; border: none; cursor: pointer; }
-    .preview { background: white; padding: 20px; margin: 20px 0; border: 1px solid #ccc; }
-    .tag-buttons button { background: black; color: white; padding: 5px 10px; margin: 2px; }
-    .saved { color: green; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#fefee7; margin:0; padding:20px; line-height:1.6; }
+    h1, h2 { text-align:center; }
+    a { color:#000; text-decoration:underline; }
+    .create-btn { display:block; margin:30px auto; background:#000; color:#fff; padding:16px 32px; border-radius:50px; font-size:18px; text-align:center; max-width:300px; }
+    input, textarea { width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; font-size:16px; }
+    button { background:#000; color:#fff; border:none; padding:12px 20px; margin:10px 0; border-radius:8px; font-size:16px; cursor:pointer; }
+    .tag-btn { display:inline-block; background:#000; color:#fff; padding:8px 16px; margin:6px 4px; border-radius:20px; font-size:14px; cursor:pointer; }
+    .tag-btn.active { background:#333; }
+    .preview-thumb { max-width:100%; border-radius:8px; margin:15px 0; display:block; }
+    #live-preview { background:#fff; padding:20px; border-radius:12px; margin-top:30px; min-height:200px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+    .section { margin-bottom:30px; padding-bottom:20px; border-bottom:1px solid #ddd; }
+    .note-list { max-width:800px; margin:0 auto; }
+    .note-list ul { list-style:none; padding:0; }
+    .note-list li { margin:20px 0; }
+    hr { border:none; border-top:1px solid #ddd; margin:40px 0; }
   </style>
 </head>
-<body>
-  <h1>Law Notes Publisher</h1>
-  <input type="text" id="title" placeholder="Page Title">
-  <input type="text" id="header" placeholder="Section Header (optional)">
-  <textarea id="main" placeholder="Main note/quote"></textarea>
-  <input type="file" id="photo" accept="image/*" multiple>
-  <button onclick="document.getElementById('photo').click()">+ Add Another Photo</button>
-  <input type="text" id="citation" placeholder="Citation (optional)">
-  <input type="text" id="source" placeholder="Source URL (optional)">
-  <button onclick="addSection()">+ Add Another Section</button>
-  <div id="sections"></div>
-  <div>
-    <h3>Tags (tap presets or type your own):</h3>
-    <button class="tag-buttons" onclick="addTag('Common Law')">Common Law</button>
-    <button class="tag-buttons" onclick="addTag('Trial by Jury')">Trial by Jury</button>
-    <button class="tag-buttons" onclick="addTag('Natural Rights')">Natural Rights</button>
-    <button class="tag-buttons" onclick="addTag('Due Process')">Due Process</button>
-    <button class="tag-buttons" onclick="addTag('Magna Carta')">Magna Carta</button>
-    <button class="tag-buttons" onclick="addTag('Abrogation')">Abrogation</button>
-    <button class="tag-buttons" onclick="addTag('Vattel')">Vattel</button>
-    <button class="tag-buttons" onclick="addTag('Locke')">Locke</button>
-    <input type="text" id="tagInput" placeholder="Type tag + Enter/Return" onkeypress="if(event.key==='Enter') addTag(this.value); this.value=''">
-    <div id="tags">Tags: none</div>
+<body style="background:#fefee7;">
+
+  <h1>My Law Notes</h1>
+  <h2>Notes & Historical Law Book Links</h2>
+  <p style="text-align:center;">by Rob Logue</p>
+
+  <div class="note-list">
+    <hr>
+    <p style="text-align:center; font-size:18px;"><strong>TAGS</strong></p>
+    <div id="existing-notes">
+      <p style="text-align:center; color:#666;">No notes yet — publish your first one!</p>
+    </div>
+    <hr>
+
+    <a href="javascript:document.getElementById('publisher-section').scrollIntoView({behavior:'smooth'})" class="create-btn">+ Create New Note</a>
   </div>
-  <button onclick="publishPage()">PUBLISH PAGE</button>
-  <div id="status"></div>
-  <div class="preview">
-    <h3>Live Preview</h3>
-    <div id="preview"></div>
+
+  <div id="publisher-section">
+    <h1>Law Notes Publisher</h1>
+
+    <input type="text" id="pageTitle" placeholder="Page Title" />
+
+    <div id="sections">
+      <div class="section">
+        <input type="text" placeholder="Section Header (optional)" class="header" />
+        <textarea placeholder="Main note/quote" rows="6" class="note"></textarea>
+
+        <input type="file" accept="image/*" multiple class="photo-input" />
+        <div class="thumbnails"></div>
+        <button type="button" class="add-photo">+ Add Another Photo</button>
+
+        <input type="text" placeholder="Citation (optional)" class="citation" />
+        <input type="text" placeholder="Source URL (optional)" class="source" />
+      </div>
+    </div>
+
+    <button type="button" id="addSection">+ Add Another Section</button>
+
+    <p><strong>Tags (tap presets or type your own):</strong></p>
+    <div id="tagPresets">
+      <span class="tag-btn" data-tag="Common Law">Common Law</span>
+      <span class="tag-btn" data-tag="Trial by Jury">Trial by Jury</span>
+      <span class="tag-btn" data-tag="Natural Rights">Natural Rights</span>
+      <span class="tag-btn" data-tag="Due Process">Due Process</span>
+      <span class="tag-btn" data-tag="Magna Carta">Magna Carta</span>
+      <span class="tag-btn" data-tag="Abrogation">Abrogation</span>
+      <span class="tag-btn" data-tag="Vattel">Vattel</span>
+      <span class="tag-btn" data-tag="Locke">Locke</span>
+    </div>
+    <input type="text" id="customTag" placeholder="Type tag + Enter/Return" />
+    <p>Tags: <span id="selectedTags">none</span></p>
+
+    <button id="publish">PUBLISH PAGE</button>
+
+    <div id="live-preview">
+      <h2>Live Preview</h2>
+      <div id="preview-content"></div>
+      <p style="margin-top:30px;"><a href="./">← Return to Law Book Links</a></p>
+    </div>
   </div>
-  <a href="index.html">← Return to Law Book Links</a>
 
   <script>
-    const repo = "iowacattails/my-law-notes";
-    const token = "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"; // Your token – delete after
+    const sectionsContainer = document.getElementById('sections');
+    const addSectionBtn = document.getElementById('addSection');
+    const publishBtn = document.getElementById('publish');
+    const previewContent = document.getElementById('preview-content');
+    const selectedTagsSpan = document.getElementById('selectedTags');
 
-    // Auto-save text
-    ['title', 'header', 'main', 'citation', 'source'].forEach(id => {
-      document.getElementById(id).addEventListener('input', debounce(saveDraft, 3000));
+    let selectedTags = [];
+
+    // Tag handling
+    document.querySelectorAll('.tag-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tag = btn.dataset.tag;
+        if (selectedTags.includes(tag)) {
+          selectedTags = selectedTags.filter(t => t !== tag);
+          btn.classList.remove('active');
+        } else {
+          selectedTags.push(tag);
+          btn.classList.add('active');
+        }
+        updateTagsDisplay();
+        renderPreview();
+      });
     });
 
-    function debounce(fn, delay) {
-      let timeout;
-      return () => { clearTimeout(timeout); timeout = setTimeout(fn, delay); };
-    }
-
-    async function saveDraft() {
-      // Save to localStorage or GitHub draft – simple local for now
-      localStorage.setItem('draft', JSON.stringify({title: document.getElementById('title').value, /* add others */ }));
-      document.getElementById('status').innerHTML = '<span class="saved">Auto-saved draft</span>';
-    }
-
-    // Image upload
-    document.getElementById('photo').addEventListener('change', e => Array.from(e.target.files).forEach(uploadImage));
-
-    async function uploadImage(file) {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result.split(',')[1];
-        const filename = `images/${Date.now()}-${file.name.replace(/\s/g, '-')}`;
-        await fetch(`https://api.github.com/repos/${repo}/contents/${filename}`, {
-          method: 'PUT',
-          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Add ${file.name}`, content: base64, branch: 'main' })
-        });
-        const url = `https://raw.githubusercontent.com/${repo}/main/${filename}`;
-        insertImage(url);
-        updatePreview();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function insertImage(url) {
-      const main = document.getElementById('main');
-      main.value += `\n![Image](${url})\n`;
-    }
-
-    // Tags
-    function addTag(tag) {
-      const tagsDiv = document.getElementById('tags');
-      tagsDiv.innerHTML += (tagsDiv.innerHTML.includes(tag) ? '' : ` ${tag}`);
-      updatePreview();
-    }
-
-    // Sections (simple add)
-    function addSection() {
-      const sections = document.getElementById('sections');
-      const newSec = document.createElement('textarea');
-      newSec.placeholder = 'New section...';
-      newSec.addEventListener('input', updatePreview);
-      sections.appendChild(newSec);
-    }
-
-    // Preview update
-    function updatePreview() {
-      const preview = document.getElementById('preview');
-      preview.innerHTML = `# ${document.getElementById('title').value || 'Untitled Page'}\n\n${document.getElementById('header').value ? `## ${document.getElementById('header').value}\n\n` : ''}${document.getElementById('main').value}\n\nTags: ${document.getElementById('tags').innerHTML}`;
-    }
-    ['title', 'header', 'main'].forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
-
-    // Publish
-    async function publishPage() {
-      const title = document.getElementById('title').value.trim() || `note-${Date.now()}`;
-      const content = `# ${title}\n\n${document.getElementById('header').value ? `## ${document.getElementById('header').value}\n\n` : ''}${document.getElementById('main').value}\n\nTags: ${document.getElementById('tags').innerHTML}`;
-      const path = `${title}.md`;
-      try {
-        await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          method: 'PUT',
-          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Publish ${title}`, content: btoa(unescape(encodeURIComponent(content))), branch: 'main' })
-        });
-        document.getElementById('status').innerHTML = '<span class="saved">✓ Published live!</span>';
-      } catch (e) {
-        document.getElementById('status').innerHTML = 'Error: ' + e;
+    document.getElementById('customTag').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        const tag = e.target.value.trim();
+        if (!selectedTags.includes(tag)) {
+          selectedTags.push(tag);
+          updateTagsDisplay();
+          renderPreview();
+        }
+        e.target.value = '';
       }
+    });
+
+    function updateTagsDisplay() {
+      selectedTagsSpan.textContent = selectedTags.length ? selectedTags.join(', ') : 'none';
     }
+
+    // Add new section
+    addSectionBtn.addEventListener('click', addNewSection);
+
+    function addNewSection() {
+      const section = document.createElement('div');
+      section.className = 'section';
+      section.innerHTML = `
+        <input type="text" placeholder="Section Header (optional)" class="header" />
+        <textarea placeholder="Main note/quote" rows="6" class="note"></textarea>
+        <input type="file" accept="image/*" multiple class="photo-input" />
+        <div class="thumbnails"></div>
+        <button type="button" class="add-photo">+ Add Another Photo</button>
+        <input type="text" placeholder="Citation (optional)" class="citation" />
+        <input type="text" placeholder="Source URL (optional)" class="source" />
+      `;
+      sectionsContainer.appendChild(section);
+      attachPhotoHandlers(section);
+      attachInputListeners(section);
+    }
+
+    // Photo handling with instant preview
+    function attachPhotoHandlers(section) {
+      const input = section.querySelector('.photo-input');
+      const thumbs = section.querySelector('.thumbnails');
+      const addBtn = section.querySelector('.add-photo');
+
+      const processFiles = async (files) => {
+        for (let file of files) {
+          if (!file.type.startsWith('image/')) continue;
+          const filename = prompt("Name this image (e.g. sidney-1683):", file.name.split('.')[0]) || file.name;
+          const cleanName = filename.replace(/[^a-z0-9\-]/gi, '');
+          const url = `https://raw.githubusercontent.com/iowacattails/my-law-notes/main/images/${cleanName}`;
+
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file);
+          img.className = 'preview-thumb';
+          img.dataset.filename = cleanName;
+          thumbs.appendChild(img);
+          renderPreview();
+        }
+      };
+
+      input.addEventListener('change', e => processFiles(e.target.files));
+      addBtn.addEventListener('click', () => input.click());
+    }
+
+    function attachInputListeners(section) {
+      section.querySelectorAll('input, textarea').forEach(el => {
+        el.addEventListener('input', renderPreview);
+      });
+    }
+
+    document.querySelectorAll('.section').forEach(section => {
+      attachPhotoHandlers(section);
+      attachInputListeners(section);
+    });
+
+    function renderPreview() {
+      const title = document.getElementById('pageTitle').value || 'Untitled Law Note';
+      let html = `<h1>${title}</h1><p><strong>Tags:</strong> ${selectedTags.join(', ') || 'none'}</p><hr>`;
+
+      document.querySelectorAll('.section').forEach(sec => {
+        const header = sec.querySelector('.header').value;
+        const note = sec.querySelector('.note').value;
+        const citation = sec.querySelector('.citation').value;
+        const source = sec.querySelector('.source').value;
+        const thumbs = sec.querySelector('.thumbnails').innerHTML;
+
+        if (header) html += `<h2>${header}</h2>`;
+        if (note) html += `<p>${note.replace(/\n/g, '<br>')}</p>`;
+        if (thumbs) html += thumbs;
+        if (citation) html += `<p><em>${citation}</em></p>`;
+        if (source) html += `<p><small>Source: <a href="${source}" target="_blank">${source}</a></small></p>`;
+        html += `<hr>`;
+      });
+
+      previewContent.innerHTML = html;
+    }
+
+    renderPreview();
+
+    // PUBLISH
+    publishBtn.addEventListener('click', () => {
+      const title = (document.getElementById('pageTitle').value || 'New Law Note').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const content = previewContent.innerHTML;
+      const finalHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:-apple-system,system-ui,sans-serif;background:#fefee7;padding:20px;line-height:1.6;}img{max-width:100%;border-radius:8px;margin:15px 0;}</style></head><body>${content}<p style="text-align:center; margin-top:40px;"><a href="./">← Back to Law Book</a></p></body></html>`;
+
+      const blob = new Blob([finalHTML], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}.html`;
+      a.click();
+
+      alert(`Success! File downloaded as ${title}.html\n\nNext steps:\n1. Upload this HTML file to your repo\n2. Upload any images you named to the /images/ folder\n3. I'll help you add the link to the home page instantly`);
+    });
   </script>
 </body>
 </html>
