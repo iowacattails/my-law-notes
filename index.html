@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Law Notes Publisher</title>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial; background: #ffffe0; padding: 20px; max-width: 900px; margin: auto; }
+    input, textarea { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+    button { background: black; color: white; padding: 10px 20px; margin: 5px; border: none; cursor: pointer; }
+    .preview { background: white; padding: 20px; margin: 20px 0; border: 1px solid #ccc; }
+    .tag-buttons button { background: black; color: white; padding: 5px 10px; margin: 2px; }
+    .saved { color: green; }
+  </style>
+</head>
+<body>
+  <h1>Law Notes Publisher</h1>
+  <input type="text" id="title" placeholder="Page Title">
+  <input type="text" id="header" placeholder="Section Header (optional)">
+  <textarea id="main" placeholder="Main note/quote"></textarea>
+  <input type="file" id="photo" accept="image/*" multiple>
+  <button onclick="document.getElementById('photo').click()">+ Add Another Photo</button>
+  <input type="text" id="citation" placeholder="Citation (optional)">
+  <input type="text" id="source" placeholder="Source URL (optional)">
+  <button onclick="addSection()">+ Add Another Section</button>
+  <div id="sections"></div>
+  <div>
+    <h3>Tags (tap presets or type your own):</h3>
+    <button class="tag-buttons" onclick="addTag('Common Law')">Common Law</button>
+    <button class="tag-buttons" onclick="addTag('Trial by Jury')">Trial by Jury</button>
+    <button class="tag-buttons" onclick="addTag('Natural Rights')">Natural Rights</button>
+    <button class="tag-buttons" onclick="addTag('Due Process')">Due Process</button>
+    <button class="tag-buttons" onclick="addTag('Magna Carta')">Magna Carta</button>
+    <button class="tag-buttons" onclick="addTag('Abrogation')">Abrogation</button>
+    <button class="tag-buttons" onclick="addTag('Vattel')">Vattel</button>
+    <button class="tag-buttons" onclick="addTag('Locke')">Locke</button>
+    <input type="text" id="tagInput" placeholder="Type tag + Enter/Return" onkeypress="if(event.key==='Enter') addTag(this.value); this.value=''">
+    <div id="tags">Tags: none</div>
+  </div>
+  <button onclick="publishPage()">PUBLISH PAGE</button>
+  <div id="status"></div>
+  <div class="preview">
+    <h3>Live Preview</h3>
+    <div id="preview"></div>
+  </div>
+  <a href="index.html">← Return to Law Book Links</a>
+
+  <script>
+    const repo = "iowacattails/my-law-notes";
+    const token = "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"; // Your token – delete after
+
+    // Auto-save text
+    ['title', 'header', 'main', 'citation', 'source'].forEach(id => {
+      document.getElementById(id).addEventListener('input', debounce(saveDraft, 3000));
+    });
+
+    function debounce(fn, delay) {
+      let timeout;
+      return () => { clearTimeout(timeout); timeout = setTimeout(fn, delay); };
+    }
+
+    async function saveDraft() {
+      // Save to localStorage or GitHub draft – simple local for now
+      localStorage.setItem('draft', JSON.stringify({title: document.getElementById('title').value, /* add others */ }));
+      document.getElementById('status').innerHTML = '<span class="saved">Auto-saved draft</span>';
+    }
+
+    // Image upload
+    document.getElementById('photo').addEventListener('change', e => Array.from(e.target.files).forEach(uploadImage));
+
+    async function uploadImage(file) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        const filename = `images/${Date.now()}-${file.name.replace(/\s/g, '-')}`;
+        await fetch(`https://api.github.com/repos/${repo}/contents/${filename}`, {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Add ${file.name}`, content: base64, branch: 'main' })
+        });
+        const url = `https://raw.githubusercontent.com/${repo}/main/${filename}`;
+        insertImage(url);
+        updatePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function insertImage(url) {
+      const main = document.getElementById('main');
+      main.value += `\n![Image](${url})\n`;
+    }
+
+    // Tags
+    function addTag(tag) {
+      const tagsDiv = document.getElementById('tags');
+      tagsDiv.innerHTML += (tagsDiv.innerHTML.includes(tag) ? '' : ` ${tag}`);
+      updatePreview();
+    }
+
+    // Sections (simple add)
+    function addSection() {
+      const sections = document.getElementById('sections');
+      const newSec = document.createElement('textarea');
+      newSec.placeholder = 'New section...';
+      newSec.addEventListener('input', updatePreview);
+      sections.appendChild(newSec);
+    }
+
+    // Preview update
+    function updatePreview() {
+      const preview = document.getElementById('preview');
+      preview.innerHTML = `# ${document.getElementById('title').value || 'Untitled Page'}\n\n${document.getElementById('header').value ? `## ${document.getElementById('header').value}\n\n` : ''}${document.getElementById('main').value}\n\nTags: ${document.getElementById('tags').innerHTML}`;
+    }
+    ['title', 'header', 'main'].forEach(id => document.getElementById(id).addEventListener('input', updatePreview));
+
+    // Publish
+    async function publishPage() {
+      const title = document.getElementById('title').value.trim() || `note-${Date.now()}`;
+      const content = `# ${title}\n\n${document.getElementById('header').value ? `## ${document.getElementById('header').value}\n\n` : ''}${document.getElementById('main').value}\n\nTags: ${document.getElementById('tags').innerHTML}`;
+      const path = `${title}.md`;
+      try {
+        await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Publish ${title}`, content: btoa(unescape(encodeURIComponent(content))), branch: 'main' })
+        });
+        document.getElementById('status').innerHTML = '<span class="saved">✓ Published live!</span>';
+      } catch (e) {
+        document.getElementById('status').innerHTML = 'Error: ' + e;
+      }
+    }
+  </script>
+</body>
+</html>
