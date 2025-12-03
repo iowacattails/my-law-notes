@@ -19,10 +19,11 @@
         #preview{margin-top:30px;padding:20px;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);border:3px solid #d4af37;border-radius:10px;min-height:300px;display:none;color:#000}
         .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px}
         .note-title{font-size:28px;color:#b8860b;text-align:center;margin:0 0 20px}
-        .citation{color:#555;font-style:italic;margin-top:20px;text-align:center}
+        .citation,.source{color:#555;font-style:italic;margin-top:20px;text-align:center}
         .back-link{text-align:center;margin-top:30px}
         .back-link a{color:#d4af37;font-size:18px;text-decoration:none}
-        #image-preview{max-width:100%;margin:15px 0;border:3px solid #d4af37;border-radius:8px}
+        #image-preview{max-width:100%;margin:15px 0;border:3px solid #d4af37;border-radius:8px;display:none}
+        #token-input{display:none;background:#333;border:2px solid #d4af37;color:white;padding:10px;border-radius:8px;margin:10px 0}
     </style>
 </head>
 <body>
@@ -30,7 +31,7 @@
     <h1>Law Notes Publisher</h1>
 
     <label>Page Title:</label>
-    <input type="text" id="title" placeholder="e.g., Algernon Sidney on Liberty">
+    <input type="text" id="title" placeholder="e.g., Test Image Note">
 
     <label>Tags (tap presets or type your own):</label>
     <div class="tags">
@@ -46,17 +47,26 @@
     <input type="text" id="custom-tags" placeholder="Add more tags, comma-separated">
 
     <label>Body of Note:</label>
-    <textarea id="content"></textarea>
+    <textarea id="content" placeholder="Write your note here…"></textarea>
 
-    <label>Add Image (will be hosted on your GitHub):</label>
+    <label>Add Image (hosted on GitHub /images/):</label>
     <input type="file" id="image" accept="image/*">
-    <img id="image-preview" style="display:none">
+    <img id="image-preview">
+    <div id="token-input">
+        <label>GitHub Token (one-time, for image uploads):</label>
+        <input type="password" id="token" placeholder="ghp_... (generate at github.com/settings/tokens with repo scope)">
+        <button onclick="saveToken()">Save Token</button>
+    </div>
 
-    <label>Citation / Source Link (optional):</label>
-    <input type="text" id="source" placeholder="https://… or book title">
+    <label>Source (link/book):</label>
+    <input type="text" id="source" placeholder="e.g., https://... or book title">
+
+    <label>Citation (quote/reference):</label>
+    <input type="text" id="citation" placeholder="e.g., 'Quote here' - Author">
 
     <button onclick="preview()">Live Preview</button>
-    <button onclick="publish()" style="background:gold;font-size:20px">Publish to GitHub</button>
+    <button onclick="publish()" style="background:gold;font-size:20px">Publish Note to GitHub</button>
+    <button onclick="updateIndex()" style="background:gold;font-size:20px">Update Index</button>
 
     <div id="preview"></div>
 
@@ -65,59 +75,102 @@
 
 <script>
 let selectedTags = [];
-let imageUrl = "";
+let imageUrl = '';
+let token = localStorage.getItem('github_token') || '';
+
+if (!token) document.getElementById('token-input').style.display = 'block';
 
 document.querySelectorAll('.tag-btn').forEach(b=>b.onclick=()=>{b.classList.toggle('selected');const t=b.dataset.tag;selectedTags.includes(t)?selectedTags=selectedTags.filter(x=>x!==t):selectedTags.push(t);});
 
-document.getElementById('image').onchange=function(e){
+function saveToken() {
+    token = document.getElementById('token').value.trim();
+    if (token) {
+        localStorage.setItem('github_token', token);
+        document.getElementById('token-input').style.display = 'none';
+        alert('Token saved! Now images will upload automatically.');
+    }
+}
+
+document.getElementById('image').onchange = function(e) {
     const file = e.target.files[0];
-    if(!file) return;
-    const name = prompt("Name this image (e.g. algernon-sidney.jpg)", file.name) || file.name;
+    if (!file) return;
+    let name = prompt('Name this image (e.g., test-image.jpg):', file.name) || file.name;
+    if (!name.includes('.')) name += '.jpg';
     const reader = new FileReader();
-    reader.onload = function(ev){
+    reader.onload = function(ev) {
+        const preview = document.getElementById('image-preview');
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
         imageUrl = `images/${name}`;
-        document.getElementById('image-preview').src = ev.target.result;
-        document.getElementById('image-preview').style.display = 'block';
-        uploadImage(ev.target.result, name);
+        if (token) uploadImage(ev.target.result.split(',')[1], name);
+        else alert('Upload token first, then re-select image.');
     };
     reader.readAsDataURL(file);
 };
 
-function uploadImage(dataUrl, filename){
-    const base64 = dataUrl.split(',')[1];
-    const url = `https://api.github.com/repos/iowacattails/my-law-notes/contents/images/${filename}`;
+function uploadImage(base64, filename) {
+    const url = `https://api.github.com/repos/iowacattails/my-law-notes/contents/${imageUrl}`;
     fetch(url, {
         method: 'PUT',
-        headers: {'Authorization': 'token YOUR_TOKEN_HERE', 'Content-Type':'application/json'},
-        body: JSON.stringify({message:`Add image ${filename}`, content:base64, branch:'main'})
-    }).then(r=>r.json()).then(res=>{
-        if(res.content) alert("Image hosted! URL: " + res.content.html_url);
-        else alert("Image uploaded – ready to publish");
-    }).catch(()=>alert("Image saved locally – will be uploaded with page"));
+        headers: {Authorization: `token ${token}`, 'Content-Type': 'application/json'},
+        body: JSON.stringify({message: `Add image ${filename}`, content: base64, branch: 'main'})
+    }).then(r => r.json()).then(res => {
+        if (res.content) {
+            imageUrl = res.content.download_url;
+            alert(`Image uploaded! URL: ${imageUrl}`);
+        }
+    }).catch(err => alert('Upload failed—check token. Will embed as relative path.'));
 }
 
-function preview(){
-    const t=document.getElementById('title').value.trim()||"Untitled";
-    const c=document.getElementById('content').value.replace(/\n/g,'<br>') + (imageUrl?`<br><img src="${imageUrl}" style="max-width:100%;border-radius:8px">`:'');
-    const s=document.getElementById('source').value.trim();
-    const tags=[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].join(' · ');
-    document.getElementById('preview').innerHTML=`
+function preview() {
+    const t = document.getElementById('title').value.trim() || 'Untitled';
+    let c = document.getElementById('content').value.replace(/\n/g, '<br>');
+    if (imageUrl) c += `<br><img src="${imageUrl}" style="max-width:100%;border-radius:8px">`;
+    const s = document.getElementById('source').value.trim();
+    const cit = document.getElementById('citation').value.trim();
+    const tags = [...selectedTags, ...document.getElementById('custom-tags').value.split(',').map(x => x.trim()).filter(x => x)].join(' · ');
+    document.getElementById('preview').innerHTML = `
         <div class="note-title">${t}</div>
-        ${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}
+        ${tags ? `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>` : ''}
         <div class="stripe">${c}</div>
-        ${s?`<div class="citation">Source: <a href="${s}" target="_blank" style="color:#d4af37">${s}</a></div>`:''}
+        ${s ? `<div class="source">Source: <a href="${s}" target="_blank" style="color:#d4af37">${s}</a></div>` : ''}
+        ${cit ? `<div class="citation">Citation: ${cit}</div>` : ''}
     `;
-    document.getElementById('preview').style.display='block';
+    document.getElementById('preview').style.display = 'block';
 }
 
-function publish(){
+function publish() {
     preview();
-    let title=document.getElementById('title').value.trim()||"new-note";
-    let filename=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')+'.html';
-    const fullHtml=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} - Iowa Cattails Law Notes</title><style>body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px}.note{max-width:900px;margin:0 auto;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);color:#000;padding:30px;border-radius:12px;box-shadow:0 0 20px gold}h1{text-align:center;color:#b8860b;text-shadow:0 0 10px gold}.tags{text-align:center;color:#b8860b;font-weight:bold;margin:20px 0}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px;min-height:200px}.source{margin-top:20px;font-style:italic;text-align:center}a{color:#d4af37}img{max-width:100%;border-radius:8px}</style></head><body><div class="note"><h1>${title}</h1>${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].length?`<div class="tags">${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].join(' · ')}</div>`:''}<div class="stripe">${document.getElementById('content').value.replace(/\n/g,'<br>')}${imageUrl?`<br><img src="${imageUrl}">`:''}</div>${document.getElementById('source').value?`<div class="source">Source: <a href="${document.getElementById('source').value}" target="_blank">${document.getElementById('source').value}</a></div>`:''}<p style="text-align:center;margin-top:30px"><a href="index.html">All Law Notes</a></p></div></body></html>`;
-    const url=`https://github.com/iowacattails/my-law-notes/new/main?filename=${filename}&value=${encodeURIComponent(fullHtml)}`;
-    window.open(url,'_blank');
-    alert("GitHub editor opened in iowacattails/my-law-notes!\nJust hit “Commit new file”.");
+    let title = document.getElementById('title').value.trim() || 'new-note';
+    let filename = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.html';
+    const s = document.getElementById('source').value.trim();
+    const cit = document.getElementById('citation').value.trim();
+    const tags = [...selectedTags, ...document.getElementById('custom-tags').value.split(',').map(x => x.trim()).filter(x => x)].join(' · ');
+    const fullHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} - Iowa Cattails Law Notes</title><style>body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px}.note{max-width:900px;margin:0 auto;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);color:#000;padding:30px;border-radius:12px;box-shadow:0 0 20px gold}h1{text-align:center;color:#b8860b;text-shadow:0 0 10px gold}.tags{text-align:center;color:#b8860b;font-weight:bold;margin:20px 0}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px;min-height:200px}.source,.citation{margin-top:20px;font-style:italic;text-align:center}a{color:#d4af37}img{max-width:100%;border-radius:8px}</style></head><body><div class="note"><h1>${title}</h1>${tags ? `<div class="tags">${tags}</div>` : ''}<div class="stripe">${document.getElementById('content').value.replace(/\n/g, '<br>')}${imageUrl ? `<br><img src="${imageUrl}">` : ''}</div>${s ? `<div class="source">Source: <a href="${s}" target="_blank">${s}</a></div>` : ''}${cit ? `<div class="citation">Citation: ${cit}</div>` : ''}<p style="text-align:center;margin-top:30px"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+    const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${filename}&value=${encodeURIComponent(fullHtml)}`;
+    window.open(url, '_blank');
+    alert(`Opening GitHub for ${filename}!\nCommit new file to publish.`);
+}
+
+function updateIndex() {
+    fetchNoteList().then(notes => {
+        const indexHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Law Notes</title><style>body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px;max-width:900px;margin:0 auto}.note-list{list-style:none;padding:0}.note-item{background:#333;margin:10px 0;padding:15px;border-radius:8px;border-left:5px solid #d4af37}a{color:#d4af37;text-decoration:none;font-size:18px}h1{color:#d4af37;text-align:center}</style></head><body><h1>My Law Notes</h1><p>Notes & Historical Law Book Links by Rob Logue</p><ul class="note-list">${notes.map(n => `<li class="note-item"><a href="${n.filename}">${n.title || n.filename.replace('.html', '')}</a></li>`).join('')}</ul><p><a href="publisher.html">+ Create New Note</a></p></body></html>`;
+        const url = `https://github.com/iowacattails/my-law-notes/edit/main/index.html?value=${encodeURIComponent(indexHtml)}`;
+        window.open(url, '_blank');
+        alert('Opening GitHub for index.html!\nCommit to update your notes list.');
+    });
+}
+
+async function fetchNoteList() {
+    if (!token) return [];
+    try {
+        const res = await fetch('https://api.github.com/repos/iowacattails/my-law-notes/contents?ref=main', {headers: {Authorization: `token ${token}`}});
+        const files = await res.json();
+        return files.filter(f => f.name.endsWith('.html') && f.name !== 'index.html' && f.name !== 'publisher.html').map(f => ({filename: f.name, title: ''})); // Title from file later if needed
+    } catch (e) {
+        alert('Index update needs token—enter it first.');
+        return [];
+    }
 }
 </script>
 </body>
