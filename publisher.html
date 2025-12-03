@@ -1,208 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Law Notes Publisher</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#fefee7; margin:0; padding:20px; }
-    input, textarea { width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; font-size:16px; }
-    button { background:#000; color:#fff; border:none; padding:12px 20px; margin:10px 0; border-radius:8px; font-size:16px; }
-    .tag-btn { display:inline-block; background:#000; color:#fff; padding:8px 16px; margin:6px 4px; border-radius:20px; font-size:14px; }
-    .tag-btn.active { background:#333; }
-    .preview-thumb { max-width:100%; border-radius:8px; margin:10px 0; }
-    #live-preview { background:#fff; padding:20px; border-radius:12px; margin-top:30px; min-height:200px; }
-    .section { margin-bottom:30px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law Notes Publisher</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; color: #333; }
+        h1, h2 { color: #d4af37; border-bottom: 2px solid #d4af37; padding-bottom: 10px; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #d4af37; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #b8942f; }
+        .tags { display: flex; flex-wrap: wrap; gap: 10px; }
+        .tag-btn { background: #e0e0e0; padding: 5px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+        .tag-btn.selected { background: #d4af37; color: white; }
+        #preview { background: white; padding: 20px; border: 1px solid #ddd; margin-top: 20px; display: none; }
+        .note-style { background: linear-gradient(90deg, #f5f5dc 50%, #fafad2 50%); padding: 20px; margin: 10px 0; }
+        .stripe { background: repeating-linear-gradient(90deg, transparent, transparent 49px, #d4af37 49px, #d4af37 50px); padding: 10px; }
+    </style>
 </head>
-<body style="background:#fefee7;">
-
-  <h1>Law Notes Publisher</h1>
-
-  <input type="text" id="pageTitle" placeholder="Page Title" />
-
-  <div id="sections">
-    <div class="section">
-      <input type="text" placeholder="Section Header (optional)" class="header" />
-      <textarea placeholder="Main note/quote" rows="6" class="note"></textarea>
-
-      <input type="file" accept="image/*" multiple class="photo-input" />
-      <div class="thumbnails"></div>
-      <button type="button" class="add-photo">+ Add Another Photo</button>
-
-      <input type="text" placeholder="Citation (optional)" class="citation" />
-      <input type="text" placeholder="Source URL (optional)" class="source" />
+<body>
+    <h1>Law Notes Publisher</h1>
+    
+    <label for="title">Title:</label>
+    <input type="text" id="title" placeholder="e.g., Common Law Rights">
+    
+    <label>Tags (tap presets or type your own):</label>
+    <div class="tags">
+        <span class="tag-btn" data-tag="Common Law">Common Law</span>
+        <span class="tag-btn" data-tag="Trial by Jury">Trial by Jury</span>
+        <span class="tag-btn" data-tag="Natural Rights">Natural Rights</span>
+        <span class="tag-btn" data-tag="Due Process">Due Process</span>
+        <span class="tag-btn" data-tag="Magna Carta">Magna Carta</span>
+        <span class="tag-btn" data-tag="Abrogation">Abrogation</span>
+        <span class="tag-btn" data-tag="Vattel">Vattel</span>
+        <span class="tag-btn" data-tag="Locke">Locke</span>
     </div>
-  </div>
+    <input type="text" id="custom-tags" placeholder="Add custom tags, comma-separated">
+    
+    <label for="content">Content:</label>
+    <textarea id="content" rows="10" placeholder="Write your law note here..."></textarea>
+    
+    <button onclick="generatePreview()">Preview Note</button>
+    <div id="preview"></div>
+    
+    <button onclick="publishToGitHub()" style="margin-top: 20px;">Publish to GitHub</button>
+    
+    <p><a href="index.html">← Return to Law Book Links</a></p>
 
-  <button type="button" id="addSection">+ Add Another Section</button>
-
-  <p><strong>Tags (tap presets or type your own):</strong></p>
-  <div id="tagPresets">
-    <span class="tag-btn" data-tag="Common Law">Common Law</span>
-    <span class="tag-btn" data-tag="Trial by Jury">Trial by Jury</span>
-    <span class="tag-btn" data-tag="Natural Rights">Natural Rights</span>
-    <span class="tag-btn" data-tag="Due Process">Due Process</span>
-    <span class="tag-btn" data-tag="Magna Carta">Magna Carta</span>
-    <span class="tag-btn" data-tag="Abrogation">Abrogation</span>
-    <span class="tag-btn" data-tag="Vattel">Vattel</span>
-    <span class="tag-btn" data-tag="Locke">Locke</span>
-  </div>
-  <input type="text" id="customTag" placeholder="Type tag + Enter/Return" />
-  <p>Tags: <span id="selectedTags">none</span></p>
-
-  <button id="publish">PUBLISH PAGE</button>
-
-  <div id="live-preview">
-    <h2>Live Preview</h2>
-    <div id="preview-content"></div>
-  </div>
-
-  <p><a href="index.html">← Return to Law Book Links</a></p>
-
-  <script>
-    const sectionsContainer = document.getElementById('sections');
-    const addSectionBtn = document.getElementById('addSection');
-    const publishBtn = document.getElementById('publish');
-    const previewContent = document.getElementById('preview-content');
-    const selectedTagsSpan = document.getElementById('selectedTags');
-
-    let selectedTags = [];
-
-    // Tag handling
-    document.querySelectorAll('.tag-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tag = btn.dataset.tag;
-        if (selectedTags.includes(tag)) {
-          selectedTags = selectedTags.filter(t => t !== tag);
-          btn.classList.remove('active');
-        } else {
-          selectedTags.push(tag);
-          btn.classList.add('active');
+    <script>
+        let selectedTags = [];
+        
+        // Tag button handlers
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+                const tag = btn.dataset.tag;
+                const index = selectedTags.indexOf(tag);
+                if (index > -1) {
+                    selectedTags.splice(index, 1);
+                } else {
+                    selectedTags.push(tag);
+                }
+                document.getElementById('custom-tags').placeholder = selectedTags.length ? `Selected: ${selectedTags.join(', ')}` : 'Add custom tags, comma-separated';
+            });
+        });
+        
+        // Custom tags
+        document.getElementById('custom-tags').addEventListener('input', (e) => {
+            const custom = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+            selectedTags = [...new Set([...selectedTags, ...custom])]; // Merge without duplicates
+        });
+        
+        function generatePreview() {
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const tags = selectedTags.join(', ');
+            
+            if (!title || !content) {
+                alert('Add a title and some content first!');
+                return;
+            }
+            
+            const html = `
+                <div class="note-style">
+                    <h2>${title}</h2>
+                    ${tags ? `<p><strong>Tags:</strong> ${tags}</p>` : ''}
+                    <div class="stripe">${content.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+            document.getElementById('preview').innerHTML = html;
+            document.getElementById('preview').style.display = 'block';
         }
-        updateTagsDisplay();
-        renderPreview();
-      });
-    });
-
-    document.getElementById('customTag').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && e.target.value.trim()) {
-        const tag = e.target.value.trim();
-        if (!selectedTags.includes(tag)) {
-          selectedTags.push(tag);
-          updateTagsDisplay();
-          renderPreview();
+        
+        function publishToGitHub() {
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+            const tags = selectedTags.join(', ');
+            
+            if (!title || !content) {
+                alert('Title and content required to publish!');
+                return;
+            }
+            
+            // Generate safe filename: lowercase, spaces to hyphens, no special chars
+            let filename = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+            if (!filename.endsWith('.html')) filename += '.html';
+            
+            // Full note HTML (your yellow-striped style)
+            const noteHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Iowa Cattails Law Notes</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; color: #333; line-height: 1.6; }
+        h1, h2 { color: #d4af37; border-bottom: 2px solid #d4af37; }
+        .note { background: linear-gradient(90deg, #f5f5dc 50%, #fafad2 50%); padding: 20px; margin: 10px 0; }
+        .stripe { background: repeating-linear-gradient(90deg, transparent, transparent 49px, #d4af37 49px, #d4af37 50px); padding: 10px; white-space: pre-line; }
+        .tags { background: #e8e8e8; padding: 10px; border-radius: 4px; }
+        a { color: #d4af37; }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    ${tags ? `<div class="tags"><strong>Tags:</strong> ${tags}</div>` : ''}
+    <div class="note">
+        <div class="stripe">${content.replace(/\n/g, '\n')}</div>
+    </div>
+    <p><a href="index.html">← Back to Law Notes</a></p>
+</body>
+</html>`;
+            
+            // Alert with code for copy-paste if needed, plus direct GitHub editor link to YOUR repo
+            alert('Opening your GitHub editor for ' + filename + '!\n\nCopy-paste the code below into the editor, then commit.\n\n' + noteHtml);
+            
+            // Direct link to YOUR my-law-notes repo's editor (fixed path)
+            const repoPath = 'iowacattails/my-law-notes';
+            const branch = 'main';
+            const fullPath = filename;
+            const editUrl = `https://github.com/${repoPath}/edit/${branch}/${fullPath}`;
+            window.open(editUrl, '_blank');
         }
-        e.target.value = '';
-      }
-    });
-
-    function updateTagsDisplay() {
-      selectedTagsSpan.textContent = selectedTags.length ? selectedTags.join(', ') : 'none';
-    }
-
-    // Add new section
-    addSectionBtn.addEventListener('click', addNewSection);
-
-    function addNewSection() {
-      const section = document.createElement('div');
-      section.className = 'section';
-      section.innerHTML = `
-        <input type="text" placeholder="Section Header (optional)" class="header" />
-        <textarea placeholder="Main note/quote" rows="6" class="note"></textarea>
-        <input type="file" accept="image/*" multiple class="photo-input" />
-        <div class="thumbnails"></div>
-        <button type="button" class="add-photo">+ Add Another Photo</button>
-        <input type="text" placeholder="Citation (optional)" class="citation" />
-        <input type="text" placeholder="Source URL (optional)" class="source" />
-      `;
-      sectionsContainer.appendChild(section);
-      attachPhotoHandlers(section);
-      attachInputListeners(section);
-    }
-
-    // Photo handling with instant upload
-    function attachPhotoHandlers(section) {
-      const input = section.querySelector('.photo-input');
-      const thumbs = section.querySelector('.thumbnails');
-      const addBtn = section.querySelector('.add-photo');
-
-      const processFiles = async (files) => {
-        for (let file of files) {
-          if (!file.type.startsWith('image/')) continue;
-
-          const filename = prompt("Name this image (e.g. algernon-sidney-1683):", file.name.split('.')[0]) || file.name;
-          const url = `https://raw.githubusercontent.com/iowacattails/my-law-notes/main/images/${filename.replace(/[^a-z0-9\-]/gi, '')}`;
-
-          // Upload to GitHub (via raw prompt fallback — instant preview works anyway)
-          const img = document.createElement('img');
-          img.src = URL.createObjectURL(file);
-          img.className = 'preview-thumb';
-          img.dataset.filename = filename;
-          thumbs.appendChild(img);
-
-          // Show immediately in preview
-          renderPreview();
-        }
-      };
-
-      input.addEventListener('change', e => processFiles(e.target.files));
-      addBtn.addEventListener('click', () => input.click());
-    }
-
-    // Live preview on any change
-    function attachInputListeners(section) {
-      section.querySelectorAll('input, textarea').forEach(el => {
-        el.addEventListener('input', renderPreview);
-      });
-    }
-
-    document.querySelectorAll('.section').forEach(section => {
-      attachPhotoHandlers(section);
-      attachInputListeners(section);
-    });
-
-    // Render live preview
-    function renderPreview() {
-      const title = document.getElementById('pageTitle').value || 'Untitled Law Note';
-      let html = `<h1>${title}</h1><p><strong>Tags:</strong> ${selectedTags.join(', ') || 'none'}</p><hr>`;
-
-      document.querySelectorAll('.section').forEach(sec => {
-        const header = sec.querySelector('.header').value;
-        const note = sec.querySelector('.note').value;
-        const citation = sec.querySelector('.citation').value;
-        const source = sec.querySelector('.source').value;
-        const thumbs = sec.querySelector('.thumbnails').innerHTML;
-
-        if (header) html += `<h2>${header}</h2>`;
-        if (note) html += `<p>${note.replace(/\n/g, '<br>')}</p>`;
-        if (thumbs) html += thumbs;
-        if (citation) html += `<p><em>${citation}</em></p>`;
-        if (source) html += `<p><small>Source: <a href="${source}" target="_blank">${source}</a></small></p>`;
-        html += `<hr>`;
-      });
-
-      previewContent.innerHTML = html;
-    }
-
-    // Initial render
-    renderPreview();
-
-    // Publish
-    publishBtn.addEventListener('click', () => {
-      const title = (document.getElementById('pageTitle').value || 'New Law Note').replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      const content = previewContent.innerHTML;
-      const finalHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{font-family:-apple-system,system-ui,sans-serif;background:#fefee7;padding:20px;line-height:1.6;}img{max-width:100%;border-radius:8px;margin:15px 0;}</style></head><body>${content}<p><a href="index.html">← Back to Law Book</a></p></body></html>`;
-
-      const blob = new Blob([finalHTML], {type: 'text/html'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${title}.html`;
-      a.click();
-
-      alert(`Page ready! Save as ${title}.html and upload to your repo. Images are already referenced — just make sure they're in /images/ folder with the exact names you entered.`);
-    });
-  </script>
+    </script>
 </body>
 </html>
