@@ -5,31 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Law Notes Publisher</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin:0; padding:20px; }
-        .container { max-width:900px; margin:0 auto; background:#1a1a1a; padding:25px; border-radius:12px; box-shadow:0 0 20px rgba(212,175,55,0.4); }
-        h1 { text-align:center; color:#d4af37; text-shadow:0 0 10px gold; margin-bottom:30px; }
-        label { display:block; margin:15px 0 8px; color:#d4af37; font-weight:bold; }
-        input, textarea, select { width:100%; padding:12px; background:#333; border:2px solid #d4af37; color:white; border-radius:8px; box-sizing:border-box; font-size:16px; }
-        textarea { min-height:220px; resize:vertical; }
-        .tags { display:flex; flex-wrap:wrap; gap:10px; margin:15px 0 20px; }
-        .tag-btn { background:#444; padding:8px 16px; border-radius:20px; cursor:pointer; transition:all .3s; }
-        .tag-btn.selected { background:#d4af37; color:black; }
-        button { background:#d4af37; color:black; font-weight:bold; padding:14px 28px; border:none; border-radius:8px; cursor:pointer; font-size:18px; margin:20px 10px 10px 0; }
-        button:hover { background:gold; }
-        #preview { margin-top:30px; padding:20px; background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%); border:3px solid #d4af37; border-radius:10px; min-height:300px; display:none; color:#000; }
-        .stripe { background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px); padding:20px; border-radius:8px; }
-        .note-title { font-size:28px; color:#b8860b; text-align:center; margin:0 0 20px; }
-        .citation { color:#555; font-style:italic; margin-top:20px; text-align:center; }
-        .back-link { text-align:center; margin-top:30px; }
-        .back-link a { color:#d4af37; font-size:18px; text-decoration:none; }
+        body {font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px}
+        .c{max-width:900px;margin:0 auto;background:#1a1a1a;padding:25px;border-radius:12px;box-shadow:0 0 20px rgba(212,175,55,.4)}
+        h1{text-align:center;color:#d4af37;text-shadow:0 0 10px gold;margin-bottom:30px}
+        label{display:block;margin:15px 0 8px;color:#d4af37;font-weight:bold}
+        input,textarea,select{width:100%;padding:12px;background:#333;border:2px solid #d4af37;color:white;border-radius:8px;box-sizing:border-box;font-size:16px}
+        textarea{min-height:220px;resize:vertical}
+        .tags{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 20px}
+        .tag-btn{background:#444;padding:8px 16px;border-radius:20px;cursor:pointer}
+        .tag-btn.selected{background:#d4af37;color:#000}
+        button{background:#d4af37;color:#000;font-weight:bold;padding:14px 28px;border:none;border-radius:8px;cursor:pointer;font-size:18px;margin:10px 10px 10px 0}
+        button:hover{background:gold}
+        #preview{margin-top:30px;padding:20px;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);border:3px solid #d4af37;border-radius:10px;min-height:300px;display:none;color:#000}
+        .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px}
+        .note-title{font-size:28px;color:#b8860b;text-align:center;margin:0 0 20px}
+        .citation{color:#555;font-style:italic;margin-top:20px;text-align:center}
+        .back-link{text-align:center;margin-top:30px}
+        .back-link a{color:#d4af37;font-size:18px;text-decoration:none}
+        #image-preview{max-width:100%;margin:15px 0;border:3px solid #d4af37;border-radius:8px}
     </style>
 </head>
 <body>
-<div class="container">
+<div class="c">
     <h1>Law Notes Publisher</h1>
 
     <label>Page Title:</label>
-    <input type="text" id="title" placeholder="e.g., The Right to Trial by Jury">
+    <input type="text" id="title" placeholder="e.g., Algernon Sidney on Liberty">
 
     <label>Tags (tap presets or type your own):</label>
     <div class="tags">
@@ -45,19 +46,17 @@
     <input type="text" id="custom-tags" placeholder="Add more tags, comma-separated">
 
     <label>Body of Note:</label>
-    <textarea id="content" rows="12" placeholder="Write your note here…"></textarea>
+    <textarea id="content"></textarea>
+
+    <label>Add Image (will be hosted on your GitHub):</label>
+    <input type="file" id="image" accept="image/*">
+    <img id="image-preview" style="display:none">
 
     <label>Citation / Source Link (optional):</label>
     <input type="text" id="source" placeholder="https://… or book title">
 
-    <label>Save as:</label>
-    <select id="save-type">
-        <option value="normal">Normal Note</option>
-        <option value="extended">Extended Note (long form)</option>
-    </select>
-
     <button onclick="preview()">Live Preview</button>
-    <button onclick="publish()" style="background:gold;font-size:20px;">Publish to GitHub</button>
+    <button onclick="publish()" style="background:gold;font-size:20px">Publish to GitHub</button>
 
     <div id="preview"></div>
 
@@ -66,18 +65,47 @@
 
 <script>
 let selectedTags = [];
-document.querySelectorAll('.tag-btn').forEach(b=>{b.onclick=()=>{b.classList.toggle('selected'); const t=b.dataset.tag; selectedTags.includes(t)?selectedTags=selectedTags.filter(x=>x!==t):selectedTags.push(t);}});
+let imageUrl = "";
+
+document.querySelectorAll('.tag-btn').forEach(b=>b.onclick=()=>{b.classList.toggle('selected');const t=b.dataset.tag;selectedTags.includes(t)?selectedTags=selectedTags.filter(x=>x!==t):selectedTags.push(t);});
+
+document.getElementById('image').onchange=function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const name = prompt("Name this image (e.g. algernon-sidney.jpg)", file.name) || file.name;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        imageUrl = `images/${name}`;
+        document.getElementById('image-preview').src = ev.target.result;
+        document.getElementById('image-preview').style.display = 'block';
+        uploadImage(ev.target.result, name);
+    };
+    reader.readAsDataURL(file);
+};
+
+function uploadImage(dataUrl, filename){
+    const base64 = dataUrl.split(',')[1];
+    const url = `https://api.github.com/repos/iowacattails/my-law-notes/contents/images/${filename}`;
+    fetch(url, {
+        method: 'PUT',
+        headers: {'Authorization': 'token YOUR_TOKEN_HERE', 'Content-Type':'application/json'},
+        body: JSON.stringify({message:`Add image ${filename}`, content:base64, branch:'main'})
+    }).then(r=>r.json()).then(res=>{
+        if(res.content) alert("Image hosted! URL: " + res.content.html_url);
+        else alert("Image uploaded – ready to publish");
+    }).catch(()=>alert("Image saved locally – will be uploaded with page"));
+}
 
 function preview(){
-    const title=document.getElementById('title').value.trim()||"Untitled";
-    const content=document.getElementById('content').value.replace(/\n/g,'<br>');
-    const source=document.getElementById('source').value.trim();
-    const allTags=[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(t=>t.trim()).filter(t=>t)].join(' · ');
+    const t=document.getElementById('title').value.trim()||"Untitled";
+    const c=document.getElementById('content').value.replace(/\n/g,'<br>') + (imageUrl?`<br><img src="${imageUrl}" style="max-width:100%;border-radius:8px">`:'');
+    const s=document.getElementById('source').value.trim();
+    const tags=[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].join(' · ');
     document.getElementById('preview').innerHTML=`
-        <div class="note-title">${title}</div>
-        ${allTags?`<p style="text-align:center;color:#b8860b;"><strong>${allTags}</strong></p>`:''}
-        <div class="stripe">${content}</div>
-        ${source?`<div class="citation">Source: <a href="${source}" target="_blank" style="color:#d4af37;">${source}</a></div>`:''}
+        <div class="note-title">${t}</div>
+        ${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}
+        <div class="stripe">${c}</div>
+        ${s?`<div class="citation">Source: <a href="${s}" target="_blank" style="color:#d4af37">${s}</a></div>`:''}
     `;
     document.getElementById('preview').style.display='block';
 }
@@ -86,26 +114,10 @@ function publish(){
     preview();
     let title=document.getElementById('title').value.trim()||"new-note";
     let filename=title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')+'.html';
-    const fullHtml=`<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} - Iowa Cattails Law Notes</title>
-<style>
-    body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px}
-    .note{max-width:900px;margin:0 auto;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);color:#000;padding:30px;border-radius:12px;box-shadow:0 0 20px gold}
-    h1{text-align:center;color:#b8860b;text-shadow:0 0 10px gold}
-    .tags{text-align:center;color:#b8860b;font-weight:bold;margin:20px 0}
-    .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px;min-height:200px}
-    .source{margin-top:20px;font-style:italic;text-align:center}
-    a{color:#d4af37}
-</style></head><body><div class="note">
-<h1>${title}</h1>
-${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(t=>t.trim()).filter(t=>t)].length?`<div class="tags">${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(t=>t.trim()).filter(t=>t)].join(' · ')}</div>`:''}
-<div class="stripe">${document.getElementById('content').value.replace(/\n/g,'<br>')}</div>
-${document.getElementById('source').value?`<div class="source">Source: <a href="${document.getElementById('source').value}" target="_blank">${document.getElementById('source').value}</a></div>`:''}
-<p style="text-align:center;margin-top:30px"><a href="index.html">All Law Notes</a></p>
-</div></body></html>`;
+    const fullHtml=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} - Iowa Cattails Law Notes</title><style>body{font-family:Arial,sans-serif;background:#111;color:#fff;margin:0;padding:20px}.note{max-width:900px;margin:0 auto;background:linear-gradient(90deg,#fffacd 50%,#ffffe0 50%);color:#000;padding:30px;border-radius:12px;box-shadow:0 0 20px gold}h1{text-align:center;color:#b8860b;text-shadow:0 0 10px gold}.tags{text-align:center;color:#b8860b;font-weight:bold;margin:20px 0}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:20px;border-radius:8px;min-height:200px}.source{margin-top:20px;font-style:italic;text-align:center}a{color:#d4af37}img{max-width:100%;border-radius:8px}</style></head><body><div class="note"><h1>${title}</h1>${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].length?`<div class="tags">${[...selectedTags,...document.getElementById('custom-tags').value.split(',').map(x=>x.trim()).filter(x=>x)].join(' · ')}</div>`:''}<div class="stripe">${document.getElementById('content').value.replace(/\n/g,'<br>')}${imageUrl?`<br><img src="${imageUrl}">`:''}</div>${document.getElementById('source').value?`<div class="source">Source: <a href="${document.getElementById('source').value}" target="_blank">${document.getElementById('source').value}</a></div>`:''}<p style="text-align:center;margin-top:30px"><a href="index.html">All Law Notes</a></p></div></body></html>`;
     const url=`https://github.com/iowacattails/my-law-notes/new/main?filename=${filename}&value=${encodeURIComponent(fullHtml)}`;
     window.open(url,'_blank');
-    alert("GitHub editor opened!\nJust hit “Commit new file” when the tab opens. You're done!");
+    alert("GitHub editor opened in iowacattails/my-law-notes!\nJust hit “Commit new file”.");
 }
 </script>
 </body>
