@@ -1,4 +1,4 @@
-<!-- VERSION 1.8 — Classic token, full features, live preview fixed -->
+<!-- VERSION 1.9 — Classic token + visible version label -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,22 +6,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Law Notes Publisher</title>
 <style>
-  body {font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
-  .top {width:100%;padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
-  label {display:block;margin:18px 0 8px;color:#d4af37;font-weight:bold;font-size:18px}
-  input,textarea {width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
-  textarea {min-height:240px;resize:vertical}
-  .tags {display:flex;flex-wrap:wrap;gap:12px;margin:15px 0 20px}
-  .tag-btn {background:#444;padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
-  .tag-btn.selected {background:#d4af37;color:#000;font-weight:bold}
-  button {background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
-  button:hover {background:gold}
-  #preview {margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
-  .stripe {background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
-  .section {margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
+  body{font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
+  .version{font-size:14px;color:#d4af37;text-align:center;margin-bottom:8px}
+  .top{width:100%;padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
+  label{display:block;margin:18px 0 8px;color:#d4af37;font-weight:bold;font-size:18px}
+  input,textarea{width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
+  textarea{min-height:240px;resize:vertical}
+  .tags{display:flex;flex-wrap:wrap;gap:12px;margin:15px 0 20px}
+  .tag-btn{background:#444;padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
+  .tag-btn.selected{background:#d4af37;color:#000;font-weight:bold}
+  button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
+  button:hover{background:gold}
+  #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
+  .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
+  .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
 </style>
 </head>
 <body>
+
+<div class="version">VERSION 1.9</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -29,7 +32,7 @@
 
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
-  <button onclick="publishAll()" style="background:gold;font-size:26px;padding:20px 50px">
+  <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
     Publish All (Images + Note + Index)
   </button>
 </div>
@@ -146,7 +149,6 @@ function previewAll() {
   document.getElementById('preview').innerHTML = h;
 }
 
-// live preview on every change
 document.addEventListener('input', previewAll);
 document.addEventListener('change', previewAll);
 
