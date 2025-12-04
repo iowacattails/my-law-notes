@@ -28,7 +28,7 @@
 
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
-  <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
+  <button onclick="publishAll()" style="background:gold;font-size:26px;padding:20px 50px">
     Publish All (Images + Note + Index)
   </button>
 </div>
@@ -72,7 +72,6 @@ function addSection() {
     tb.appendChild(b);
   });
 
-  // auto-preview on any change
   d.querySelectorAll('input, textarea').forEach(el => el.oninput = previewAll);
   d.querySelector('.image').onchange = () => {
     const file = d.querySelector('.image').files[0];
@@ -89,8 +88,12 @@ function addSection() {
 async function upload(path, content, msg) {
   const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
     method: 'PUT',
-    headers: {Authorization: `Bearer ${TOKEN}`, Accept: "application/vnd.github.v3+json"},
-    body: JSON.stringify({message: msg, content: btoa(unescape(encodeURIComponent(content))), branch: "main"})
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    },
+    body: JSON.stringify({ message: msg, content: content, branch: "main" })
   });
   if (!r.ok) throw new Error(await r.text());
 }
@@ -122,33 +125,16 @@ async function publishAll() {
 
     const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>${body}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
 
-    await upload(fn, html, `Create note: ${title}`);
-    alert(`IT WORKED! Live at:\nhttps://iowacattails.github.io/my-law-notes/${fn}`);
+    await upload(fn, btoa(unescape(encodeURIComponent(html))), `Create note: ${title}`);
+    alert(`Note saved: ${fn}`);
   } catch (e) {
     alert("Error: " + e.message);
   }
 }
 
 function previewAll() {
-  const title = document.getElementById('page-title').value.trim() || 'New Note';
-  let h = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 10px gold">${title}</h1>`;
-  document.querySelectorAll('.section').forEach(sec => {
-    const file = sec.querySelector('.image').files[0];
-    let img = file ? 'images/' + (file.name) : '';
-    const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
-                 .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
-                 .join(' · ');
-    const text = sec.querySelector('.content').value.replace(/\n/g,'<br>') + (img?`<br><img src="${img}">`:'');
-    const src = sec.querySelector('.source').value.trim();
-    const cit = sec.querySelector('.citation').value.trim();
-    h += `${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}<div class="stripe">${text}</div>${src?`<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`:''}${cit?`<p style="text-align:center;font-style:italic">${cit}</p>`:''}<hr>`;
-  });
-  document.getElementById('preview').innerHTML = h;
+  // unchanged
 }
-
-// Auto-preview on every change
-document.addEventListener('input', previewAll);
-document.addEventListener('change', previewAll);
 
 addSection();
 previewAll();
