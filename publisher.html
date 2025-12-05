@@ -1,200 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<html><head><meta charset="utf-8"><title>New Law Note</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Law Notes Publisher</title>
 <style>
-  body{font-family:Arial;background:#111;color:#fff;margin:0;padding:12px 10px}
-  .version{font-size:15px;color:#d4af37;text-align:center;margin:8px 0 20px}
-  .top{width:100%;padding:20px;font-size:24px;background:#333;border:5px solid #d4af37;color:#fff;border-radius:20px;text-align:center;box-sizing:border-box}
-  label{display:block;margin:22px 0 10px;color:#d4af37;font-weight:bold;font-size:19px}
-  input,textarea,.header-box{width:100%;padding:16px;background:#333;border:5px solid #d4af37;color:#fff;border-radius:18px;box-sizing:border-box;font-size:18px}
-  textarea{min-height:280px;resize:vertical}
-  .header-box{min-height:60px;background:#222;color:#d4af37;text-align:center;font-size:19px}
-  .tags{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
-  .tag-btn{background:#444;padding:11px 20px;border-radius:30px;font-size:16px;cursor:pointer}
-  .tag-btn.selected{background:#d4af37;color:#000;font-weight:bold}
-  button{background:#d4af37;color:#000;font-weight:bold;border:none;border-radius:20px;cursor:pointer;margin:20px 8px;font-size:24px}
-  .add-btn{padding:18px 40px}
-  .publish-btn{padding:28px 80px;background:gold;font-size:32px}
-  button:hover{opacity:0.9;transform:scale(1.03)}
-  #preview{margin:40px -10px 0;padding:40px;background:#ffffe0;color:#000;border:6px solid #d4af37;border-radius:20px;font-size:19px;line-height:1.7}
-  .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px;margin:25px 0}
-  .section{margin-top:60px;padding-top:40px;border-top:3px dashed #d4af37}
-  .back{text-align:center;margin:90px 0 40px;font-size:26px;font-weight:bold}
-  .back a{color:#d4af37;text-decoration:underline}
-  .img-prev{max-width:100%;border-radius:15px;margin:20px 0;border:4px solid #d4af37}
-</style>
-</head>
-<body>
+  body{font:18px/1.6 Georgia,serif;max-width:600px;margin:40px auto;padding:20px;background:#fdfdfd}
+  input,textarea,button{width:100%;margin:12px 0;padding:14px;font:18px Georgia,serif;box-sizing:border-box;border:1px solid #ccc;border-radius:8px}
+  button{background:#1a5fb4;color:white;font-weight:bold;border:none;cursor:pointer}
+  #preview{background:#f8f8f8;padding:20px;border:1px solid #eee;margin:20px 0;border-radius:8px}
+  img{max-width:100%;border-radius:8px}
+</style></head><body>
 
-<div class="version">VERSION 1.11 – FINAL</div>
-
-<input type="text" id="page-title" class="top" placeholder="Page Title">
-
-<div id="sections"></div>
-
-<div style="text-align:center;margin:60px 0">
-  <button class="add-btn" onclick="addSection()">+ Add Another Section</button>
-</div>
-<div style="text-align:center">
-  <button class="publish-btn" onclick="publishAll()">Publish All<br>(Images + Note + Index)</button>
-</div>
-
-<div id="preview"></div>
-
-<div class="back">
-  <a href="https://iowacattails.github.io/my-law-notes/">Back to All Law Notes</a>
-</div>
+<h1>New Law Note</h1>
+<form id="f">
+  <input required placeholder="Title" id="title">
+  <input placeholder="Citation (optional)" id="citation">
+  <textarea required rows=9 placeholder="Your note text…" id="body"></textarea>
+  <input type=file accept="image/*" id="img">
+  <input placeholder="Source link (optional)" id="link">
+  <input placeholder="Tags (comma separated)" id="tags" value="law, constitution">
+  <div id="preview"></div>
+  <button type=submit>Publish Instantly</button>
+</form>
 
 <script>
-// YOUR TOKEN HERE (safe – only works on this repo)
-const GITHUB_TOKEN = "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";
-const REPO = "iowacattails/my-law-notes";
-
-const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke","Bill of Rights","Constitution","Habeas Corpus","Jury Nullification"];
-
-let sectionCount = 0;
-
-function addSection() {
-  sectionCount++;
-  const div = document.createElement('div');
-  div.className = 'section';
-  div.innerHTML = `
-    <h2 style="color:#d4af37;text-align:center;margin-bottom:35px;font-size:28px">Note Section ${sectionCount}</h2>
-    
-    <label>Tags (tap to select)</label>
-    <div class="tags" id="tags${sectionCount}"></div>
-    <input type="text" class="custom-tags" placeholder="Add custom tags, comma-separated">
-    
-    <div class="header-box" contenteditable="true" placeholder="Section Header / Context (optional)"></div>
-    
-    <label>Body of Note</label>
-    <textarea class="content" placeholder="Write your full note here..."></textarea>
-    
-    <label>Add Image (auto-uploaded)</label>
-    <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none">
-    
-    <label>Source (link or book)</label>
-    <input type="text" class="source">
-    
-    <label>Citation (quote/reference)</label>
-    <input type="text" class="citation">
-  `;
-  document.getElementById('sections').appendChild(div);
-
-  // Add tag buttons
-  const tagBox = document.getElementById(`tags${sectionCount}`);
-  tagsList.forEach(t => {
-    const b = document.createElement('span');
-    b.className = 'tag-btn';
-    b.textContent = t;
-    b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
-    tagBox.appendChild(b);
-  });
-
-  // Live updates
-  div.querySelectorAll('input, textarea, .header-box').forEach(el => el.addEventListener('input', previewAll));
-  div.querySelector('.image').onchange = async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const name = prompt("Image filename (with extension)", file.name) || file.name;
-    if (!name) return;
-
-    // Show preview immediately
-    const prev = div.querySelector('.img-prev');
-    prev.src = URL.createObjectURL(file);
-    prev.style.display = 'block';
-
-    // Auto-upload in background
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        await fetch(`https://api.github.com/repos/${REPO}/contents/images/${name}`, {
-          method: 'PUT',
-          headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            Accept: 'application/vnd.github.v3+json'
-          },
-          body: JSON.stringify({
-            message: `Add image ${name}`,
-            content: reader.result.split(',')[1],
-            branch: "main"
-          })
-        });
-      } catch (e) { alert("Image upload failed – but preview still works"); }
-    };
-    reader.readAsDataURL(file);
-    previewAll();
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const data = {
+    title: e.target.title.value.trim(),
+    citation: e.target.citation.value.trim(),
+    body: e.target.body.value.trim(),
+    link: e.target.link.value.trim(),
+    tags: e.target.tags.value.split(',').map(t=>t.trim()).filter(Boolean),
+    image: ''
   };
+  if (e.target.img.files[0]) {
+    data.image = await new Promise(r=>{let fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(e.target.img.files[0])});
+  }
 
-  previewAll();
-}
-
-function previewAll() {
-  const title = document.getElementById('page-title').value.trim() || "New Note";
-  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px;margin:30px 0">${title}</h1>`;
-
-  document.querySelectorAll('.section').forEach(sec => {
-    const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent)
-                 .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
-                 .join(' · ');
-    const header = sec.querySelector('.header-box').innerText.trim();
-    const text = sec.querySelector('.content').value.replace(/\n/g,'<br>');
-    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
-    const src = sec.querySelector('.source').value.trim();
-    const cit = sec.querySelector('.citation').value.trim();
-
-    if (tags) html += `<p style="text-align:center;color:#b8860b;font-size:20px"><strong>${tags}</strong></p>`;
-    if (header) html += `<h2 style="text-align:center;color:#d4af37;font-size:26px;margin:30px 0">${header}</h2>`;
-    html += `<div class="stripe">${text}${img}</div>`;
-    if (src) html += `<p style="text-align:center;margin:15px 0">Source: <a href="${src}" style="color:#d4af37">${src}</a></p>`;
-    if (cit) html += `<p style="text-align:center;font-style:italic;margin:15px 0">${cit}</p>`;
-    html += `<hr style="border:1px dashed #d4af37;margin:50px 0">`;
+  const res = await fetch('https://api.github.com/repos/iowacattails/my-law-notes/dispatches', {
+    method:'POST',
+    headers: {'Accept':'application/vnd.github.v3+json'},
+    body: JSON.stringify({event_type:'new-law-note', client_payload: data})
   });
 
-  document.getElementById('preview').innerHTML = html;
-}
+  if (res.ok) {
+    alert('Published! Refresh the index in 30–60 seconds.');
+    e.target.reset(); document.getElementById('preview').innerHTML='';
+  } else alert('Failed – check Actions tab');
+};
 
-async function publishAll() {
-  if (!GITHUB_TOKEN.includes("github_pat")) return alert("Token missing!");
-  
-  const title = document.getElementById('page-title').value.trim() || "New Note";
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-
-  // Build final HTML (same as preview but wrapped properly)
-  const finalHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 12px gold;font-size:32px;margin:30px 0}h2{color:#d4af37;text-align:center;font-size:26px;margin:30px 0}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px;margin:25px 0}a{color:#d4af37}img{max-width:100%;border-radius:15px;margin:20px 0;border:4px solid #d4af37}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById('preview').innerHTML}<p style="text-align:center;margin-top:80px;font-size:22px"><a href="index.html">All Law Notes</a></p></div></body></html>`;
-
-  // Upload note
-  await fetch(`https://api.github.com/repos/${REPO}/contents/${slug}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' },
-    body: JSON.stringify({ message: `Publish: ${title}`, content: btoa(unescape(encodeURIComponent(finalHTML))), branch: "main" })
-  });
-
-  // Auto-update index.html – newest on top
-  let indexHTML = `<h2 style="text-align:center;color:#d4af37;font-size:28px;margin:60px 0">All Law Notes</h2><ul style="list-style:none;padding:0;max-width:700px;margin:auto">`;
-  try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`);
-    const data = await res.json();
-    indexHTML = atob(data.content);
-  } catch(e) {}
-  const newLine = `<li style="margin:20px 0;font-size:22px"><a href="${slug}">${title}</a></li>`;
-  indexHTML = indexHTML.replace('</ul>', `  ${newLine}\n</ul>`);
-  await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' },
-    body: JSON.stringify({ message: `Index: added ${title}`, content: btoa(unescape(encodeURIComponent(indexHTML))), sha: (await (await fetch(`https://api.github.com/repos/${REPO}/contents/index.html`)).json()).sha, branch: "main" })
-  });
-
-  alert(`SUCCESS! Published & index updated!\n\nhttps://iowacattails.github.io/my-law-notes/${slug}`);
-  if (confirm("Open your new note now?")) open(`https://iowacattails.github.io/my-law-notes/${slug}`, '_blank');
-}
-
-addSection();
-previewAll();
+// live preview
+['title','citation','body','link','tags','img'].forEach(id=>document.getElementById(id).oninput=document.getElementById(id).onchange=()=> {
+  const preview = `<h2>${document.getElementById('title').value||'Title'}</h2><em>${document.getElementById('citation').value}</em><br>${
+    document.querySelector('#img').files[0] ? '<img src="'+URL.createObjectURL(document.querySelector('#img').files[0])+'"><br>' : ''
+  }${document.getElementById('body').value.replace(/\n/g,'<br>')}`;
+  document.getElementById('preview').innerHTML = preview;
+});
 </script>
-</body>
-</html>
+</body></html>
