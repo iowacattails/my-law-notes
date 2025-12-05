@@ -1,4 +1,4 @@
-<!-- VERSION 3.3 — Fixed image upload URL (added missing ?) -->
+<!-- VERSION 3.4 — Final working version (image preview + upload fixed) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +25,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 3.3</div>
+<div class="version">VERSION 3.4</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -97,7 +97,7 @@ function previewAll() {
     const file = sec.querySelector('.image').files[0];
     const img = file ? `images/${file.name}` : '';
     const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
-                 .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
+                 .concat(sec.querySelector('.custom-tags.value.split(',').map(t=>t.trim()).filter(Boolean))
                  .join(' · ');
     const text = sec.querySelector('.content').value.replace(/\n/g,'<br>') + (img?`<br><img src="${img}">`:'');
     const src = sec.querySelector('.source').value.trim();
