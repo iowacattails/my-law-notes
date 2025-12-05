@@ -1,0 +1,49 @@
+name: Publish Law Note
+on:
+  repository_dispatch:
+    types: [new-law-note]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create note + update index
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+          const payload = ${{ toJSON(github.event.client_payload) }};
+
+          const slug = payload.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '.html';
+          const date = new Date().toISOString().slice(0,10);
+
+          const note = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${payload.title}</title>
+          <meta name="viewport" content="width=device-width,initial-scale=1"><style>
+          body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.7}
+          img{max-width:100%;border-radius:8px}</style></head><body>
+          <h1>${payload.title}</h1>
+          ${payload.citation ? `<p><em>${payload.citation}</em></p>` : ''}
+          ${payload.image ? `<img src="${payload.image}"><br><br>` : ''}
+          <div>${payload.body.replace(/\n/g,'<br>')}</div>
+          ${payload.link ? `<p><a href="${payload.link}">Source →</a></p>` : ''}
+          <p><small>${date} • ${payload.tags.join(', ')}</small><br>
+          <a href="index.html">← All Notes</a></p></body></html>`;
+          fs.writeFileSync(slug, note);
+
+          let index = fs.readFileSync('index.html','utf8');
+          const marker = '<!-- AUTO-GENERATED NOTES -->';
+          const entry = `\n    <li><a href="${slug}">${payload.title}</a>${payload.image?' 🖼️':''} – ${payload.tags.join(', ')}</li>`;
+          index = index.replace(marker, marker + entry);
+          fs.writeFileSync('index.html', index);
+          EOF
+
+      - name: Commit & push
+        run: |
+          git config user.name "Law Notes Bot"
+          git config user.email "bot@noreply.github.com"
+          git add .
+          git commit -m "Auto-publish: ${{ github.event.client_payload.title }}"
+          git push
