@@ -1,4 +1,4 @@
-<!-- VERSION 1.11 — Final working classic token -->
+<!-- VERSION 2.0 — Proven two-tab method (no token) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,25 +6,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Law Notes Publisher</title>
 <style>
-  body{font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
-  .version{font-size:14px;color:#d4af37;text-align:center;margin-bottom:8px}
-  .top{width:100%;padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
-  label{display:block;margin:18px 0 8px;color:#d4af37;font-weight:bold;font-size:18px}
-  input,textarea{width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
-  textarea{min-height:240px;resize:vertical}
-  .tags{display:flex;flex-wrap:wrap;gap:12px;margin:15px 0 20px}
-  .tag-btn{background:#444;padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
-  .tag-btn.selected{background:#d4af37;color:#000;font-weight:bold}
-  button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
-  button:hover{background:gold}
-  #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
-  .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
-  .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
+  body {font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
+  .top {width:100%;padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
+  label {display:block;margin:18px 0 8px;color:#d4af37;font-weight:bold;font-size:18px}
+  input,textarea {width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
+  textarea {min-height:240px;resize:vertical}
+  .tags {display:flex;flex-wrap:wrap;gap:12px;margin:15px 0 20px}
+  .tag-btn {background:#444;padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
+  .tag-btn.selected {background:#d4af37;color:#000;font-weight:bold}
+  button {background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
+  button:hover {background:gold}
+  #preview {margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
+  .stripe {background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
+  .section {margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
 </style>
 </head>
 <body>
 
-<div class="version">VERSION 1.11 — FINAL</div>
+<div style="font-size:14px;color:#d4af37;text-align:center;margin-bottom:8px">VERSION 2.0 — Proven two-tab method</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -33,16 +32,13 @@
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
   <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
-    Publish All (Images + Note + Index)
+    Publish All — opens two tabs
   </button>
 </div>
 
 <div id="preview"></div>
 
 <script>
-const TOKEN = "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";  // your brand-new classic token
-const REPO = "iowacattails/my-law-notes";
-
 let sectionCount = 0;
 const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke"];
 
@@ -51,13 +47,13 @@ function addSection() {
   const d = document.createElement('div');
   d.className = 'section';
   d.innerHTML = `
-    <h2 style="color:#d4af37;text-align:center;margin-bottom:30px">Note Section ${sectionCount}</h2>
+    <h2 style="color:#d4af37;text-align:center;margin-bottom:30px">Note Section ${sectionCount</h2>
     <label>Tags (tap to select)</label>
     <div class="tags" id="tags${sectionCount}"></div>
     <input type="text" class="custom-tags" placeholder="Add custom tags, comma-separated">
     <label>Body of Note</label>
     <textarea class="content" placeholder="Write your full note here..."></textarea>
-    <label>Add Image (auto-uploaded)</label>
+    <label>Add Image (opens GitHub tab)</label>
     <input type="file" class="image" accept="image/*">
     <img class="img-prev" style="display:none;max-width:100%">
     <label>Source (link or book)</label>
@@ -81,6 +77,8 @@ function addSection() {
     const file = d.querySelector('.image').files[0];
     if (file) {
       const name = prompt('Image filename (with extension)', file.name) || file.name;
+      const url = `https://github.com/iowacattails/my-law-notes/upload/main/images?filename=${encodeURIComponent(name)}`;
+      window.open(url, '_blank');
       const reader = new FileReader();
       reader.onload = e => d.querySelector('.img-prev').src = e.target.result;
       reader.readAsDataURL(file);
@@ -89,55 +87,12 @@ function addSection() {
   };
 }
 
-async function upload(path, content, msg) {
-  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: {Authorization: `token ${TOKEN}`},
-    body: JSON.stringify({message: msg, content: content, branch: "main"})
-  });
-  if (!r.ok) throw new Error(await r.text());
-}
-
-async function publishAll() {
-  try {
-    const title = document.getElementById('page-title').value.trim() || 'new-note';
-    const fn = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-    let body = '';
-
-    for (const sec of document.querySelectorAll('.section')) {
-      const file = sec.querySelector('.image').files[0];
-      let img = '';
-      if (file) {
-        const name = prompt('Image filename (with extension)', file.name) || file.name;
-        const fr = new FileReader();
-        const b64 = await new Promise(r => { fr.onload = e => r(e.target.result.split(',')[1]); fr.readAsDataURL(file); });
-        await upload(`images/${name}`, b64, `Add ${name}`);
-        img = `images/${name}`;
-      }
-      const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
-                   .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
-                   .join(' · ');
-      const text = sec.querySelector('.content').value.replace(/\n/g,'<br>') + (img?`<br><img src="${img}">`:'');
-      const src = sec.querySelector('.source').value.trim();
-      const cit = sec.querySelector('.citation').value.trim();
-      body += `${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}<div class="stripe">${text}</div>${src?`<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`:''}${cit?`<p style="text-align:center;font-style:italic">${cit}</p>`:''}<hr>`;
-    }
-
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>${body}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
-
-    await upload(fn, btoa(unescape(encodeURIComponent(html))), `Create note: ${title}`);
-    alert(`SUCCESS! Note is live:\nhttps://iowacattails.github.io/my-law-notes/${fn}`);
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
-}
-
 function previewAll() {
   const title = document.getElementById('page-title').value.trim() || 'New Note';
   let h = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 10px gold">${title}</h1>`;
   document.querySelectorAll('.section').forEach(sec => {
     const file = sec.querySelector('.image').files[0];
-    let img = file ? 'images/' + (file.name) : '';
+    const img = file ? `images/${file.name}` : '';
     const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
                  .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
                  .join(' · ');
@@ -147,6 +102,16 @@ function previewAll() {
     h += `${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}<div class="stripe">${text}</div>${src?`<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`:''}${cit?`<p style="text-align:center;font-style:italic">${cit}</p>`:''}<hr>`;
   });
   document.getElementById('preview').innerHTML = h;
+}
+
+function publishAll() {
+  previewAll();
+  const title = document.getElementById('page-title').value.trim() || 'new-note';
+  const fn = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById('preview').innerHTML}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+  const url = `https://github.com/iowacattails/my-law-notes/new/main?filename=${fn}&value=${encodeURIComponent(html)}`;
+  window.open(url, '_blank');
+  alert("Image tab(s) already opened — commit them first → then commit the note tab. Done.");
 }
 
 document.addEventListener('input', previewAll);
