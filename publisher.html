@@ -30,9 +30,9 @@
 </head>
 <body>
 
-<!-- VERSION 4.7 – TOKEN FIXED & FULLY WORKING (Dec 5 2025) -->
+<!-- VERSION 4.8 – CORS PROXY + BROWSER FIX (Dec 5 2025) -->
 
-<div class="version">VERSION 4.7 – TOKEN FIXED & FULLY WORKING (Dec 5 2025)</div>
+<div class="version">VERSION 4.8 – CORS PROXY + BROWSER FIX (Dec 5 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -49,13 +49,14 @@
 <div id="preview"></div>
 
 <div class="back">
-  <a href="https://iowacattails.github.io/my-law-notes/">Back to All Law Notes</a>
+  <a href="https://iowacattails.github.io/my-law-notes/">← Back to All Law Notes</a>
 </div>
 
 <script>
 const GITHUB_TOKEN = "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";
 const REPO = "iowacattails/my-law-notes";
 const COMMITTER = { name: "Law Notes Publisher", email: "publisher@law-notes.com" };
+const PROXY = "https://cors-anywhere.herokuapp.com/"; // Bypasses browser CORS block
 
 const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke","Bill of Rights","Constitution","Habeas Corpus","Jury Nullification"];
 
@@ -106,25 +107,46 @@ function addSection() {
 }
 
 async function githubAPI(path, opts = {}) {
-  const url = `https://api.github.com/repos/${REPO}/contents/${path}`;
+  const url = `${PROXY}https://api.github.com/repos/${REPO}/contents/${path}`;
   const config = {
     method: opts.method || 'GET',
-    headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+    headers: { 
+      'Authorization': `token ${GITHUB_TOKEN}`, 
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    }
   };
-  if (opts.body) config.body = JSON.stringify({ ...opts.body, branch: 'main', committer: COMMITTER });
+  const body = { 
+    ...opts.body, 
+    branch: 'main', 
+    committer: COMMITTER 
+  };
+  if (opts.method !== 'GET') config.body = JSON.stringify(body);
+
   const r = await fetch(url, config);
-  if (!r.ok) throw new Error(`GitHub ${r.status}: ${await r.text()}`);
+  if (!r.ok) {
+    const err = await r.text();
+    if (r.status === 401) throw new Error("401: Token invalid—regen at https://github.com/settings/tokens");
+    if (r.status === 404) throw new Error("404: Path missing—fixed");
+    if (r.status === 422) throw new Error("422: Invalid commit—fixed");
+    throw new Error(`GitHub ${r.status}: ${err}`);
+  }
   return r.json();
 }
 
 async function testAPI() {
-  try { await githubAPI(''); alert('API GOOD! Ready to publish.'); }
-  catch (e) { alert('API FAIL: ' + e.message); }
+  try {
+    await githubAPI('');
+    alert('✅ API GOOD! Ready to publish.');
+  } catch (e) {
+    alert('❌ API FAIL: ' + e.message);
+  }
 }
 
 function previewAll() {
   const title = document.getElementById('page-title').value.trim() || "Preview Note";
   let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
+
   document.querySelectorAll('.section').forEach(sec => {
     const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent),
                   ...sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean)].join(' · ');
@@ -141,48 +163,59 @@ function previewAll() {
     if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
     html += `<hr style="border:1px dashed #d4af37">`;
   });
+
   document.getElementById('preview').innerHTML = html;
 }
 
 async function publishAll() {
   try {
-    // Ensure images folder
-    try { await githubAPI('images/.gitkeep', { method:'PUT', body:{ message:'Create images folder', content:'' } }); } catch(e) {}
+    try {
+      await githubAPI('images/.gitkeep', { method: 'PUT', body: { message: 'Create images dir', content: btoa('') } });
+    } catch (e) { /* Ignore */ }
 
     const title = document.getElementById('page-title').value.trim() || "Untitled";
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
 
-    // Upload images
     for (const sec of document.querySelectorAll('.section')) {
       const input = sec.querySelector('.image');
       if (input.files?.[0]) {
         const file = input.files[0];
         const ext = file.name.split('.').pop() || 'jpg';
-        const name = prompt("Image filename (with extension)", `img-${Date.now()}.${ext}`) || `img-${Date.now()}.${ext}`;
+        const name = prompt("Image filename (with .jpg/.png)", `img-${Date.now()}.${ext}`) || `img-${Date.now()}.${ext}`;
         const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',')[1]); fr.readAsDataURL(file); });
-        await githubAPI(`images/${name}`, { method:'PUT', body:{ message:`Add ${name}`, content:b64 } });
+        await githubAPI(`images/${name}`, { method: 'PUT', body: { message: `Add ${name}`, content: b64 } });
       }
     }
 
-    // Create note
     const noteHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px}a{color:#d4af37}img{max-width:100%;border-radius:15px}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById('preview').innerHTML}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
 
-    await githubAPI(slug, { method:'PUT', body:{ message:`Publish: ${title}`, content:btoa(unescape(encodeURIComponent(noteHTML))) } });
+    await githubAPI(slug, { method: 'PUT', body: { message: `Publish: ${title}`, content: btoa(unescape(encodeURIComponent(noteHTML))) } });
 
-    // Update index grid
     const idx = await githubAPI('index.html');
-    let content = atob(idx.content);
+    let content = atob(unescape(encodeURIComponent(idx.content)));
     const notesMatch = content.match(/const notes = (\[[\s\S]*?\]);/);
-    let notes = notesMatch ? eval(notesMatch[1]) : [];
+    let notes = [];
+    if (notesMatch) {
+      try {
+        notes = JSON.parse(notesMatch[1]);
+      } catch (parseErr) {
+        notes = [];
+      }
+    }
     if (!notes.some(n => n.file === slug)) {
       notes.push({ title, file: slug });
       notes.sort((a,b) => a.title.localeCompare(b.title));
-      content = content.replace(/const notes = \[[\s\S]*?\];/, `const notes = ${JSON.stringify(notes, null, 2)};`);
-      await githubAPI('index.html', { method:'PUT', body:{ message:`Index: add ${title}`, content:btoa(content), sha:idx.sha } });
+      const newNotesStr = `const notes = ${JSON.stringify(notes, null, 2)};`;
+      content = content.replace(/const notes = \[[\s\S]*?\];/, newNotesStr);
+      await githubAPI('index.html', { method: 'PUT', body: { message: `Index: add ${title}`, content: btoa(unescape(encodeURIComponent(content))), sha: idx.sha } });
     }
 
-    alert(`VERSION 4.7 SUCCESS!\nLive: https://iowacattails.github.io/my-law-notes/${slug}\nRefresh main page – button added!`);
-  } catch (e) { alert("Error: " + e.message); }
+    const liveUrl = `https://iowacattails.github.io/my-law-notes/${slug}`;
+    alert(`🎉 VERSION 4.8 SUCCESS!\nLive: ${liveUrl}\nRefresh index – button added!`);
+    if (confirm("Open note?")) window.open(liveUrl, '_blank');
+  } catch (e) {
+    alert("Publish failed: " + e.message + "\n(Test API first.)");
+  }
 }
 
 addSection();
