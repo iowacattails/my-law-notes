@@ -1,49 +1,69 @@
 name: Publish Law Note
 on:
   repository_dispatch:
-    types: [new-law-note]
-
+    types: [publish-law-note]
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Create note + update index
+      - uses: actions/checkout@v3
+      - name: Publish Note
         run: |
-          node - <<'EOF'
-          const fs = require('fs');
-          const payload = ${{ toJSON(github.event.client_payload) }};
-
-          const slug = payload.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '.html';
-          const date = new Date().toISOString().slice(0,10);
-
-          const note = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${payload.title}</title>
-          <meta name="viewport" content="width=device-width,initial-scale=1"><style>
-          body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:20px;line-height:1.7}
-          img{max-width:100%;border-radius:8px}</style></head><body>
-          <h1>${payload.title}</h1>
-          ${payload.citation ? `<p><em>${payload.citation}</em></p>` : ''}
-          ${payload.image ? `<img src="${payload.image}"><br><br>` : ''}
-          <div>${payload.body.replace(/\n/g,'<br>')}</div>
-          ${payload.link ? `<p><a href="${payload.link}">Source →</a></p>` : ''}
-          <p><small>${date} • ${payload.tags.join(', ')}</small><br>
-          <a href="index.html">← All Notes</a></p></body></html>`;
-          fs.writeFileSync(slug, note);
-
-          let index = fs.readFileSync('index.html','utf8');
-          const marker = '<!-- AUTO-GENERATED NOTES -->';
-          const entry = `\n    <li><a href="${slug}">${payload.title}</a>${payload.image?' 🖼️':''} – ${payload.tags.join(', ')}</li>`;
-          index = index.replace(marker, marker + entry);
-          fs.writeFileSync('index.html', index);
-          EOF
-
-      - name: Commit & push
-        run: |
-          git config user.name "Law Notes Bot"
-          git config user.email "bot@noreply.github.com"
-          git add .
-          git commit -m "Auto-publish: ${{ github.event.client_payload.title }}"
-          git push
+          # Install dependencies if needed
+          pip install requests
+          
+          # Script to handle publish
+          python -c "
+          import json, base64, requests, os
+          event = json.loads('${{ github.event.client_payload }}')
+          title = event['title']
+          slug = event['slug']
+          sections = event['sections']
+          
+          # Build note HTML
+          body = ''
+          for sec in sections:
+            tags = ' · '.join(sec['tags'])
+            header = sec['header']
+            text = sec['body'].replace('\n', '<br>')
+            img = ''
+            if sec['image']:
+              name = f'img-{int(os.times()[4]*1000)}.jpg'
+              with open(name, 'wb') as f:
+                f.write(base64.b64decode(sec['image']))
+              requests.put(f'https://api.github.com/repos/${{ github.repository }}/contents/images/{name}', 
+                           headers={'Authorization': 'token ${{ secrets.GITHUB_TOKEN }}'}, 
+                           json={'message': 'Add image', 'content': base64.b64encode(open(name, 'rb').read()).decode()})
+              img = f'<br><img src=\"images/{name}\">'
+            source = sec['source']
+            citation = sec['citation']
+            body += f'<p style=\"text-align:center;color:#b8860b\"><strong>{tags}</strong></p>' if tags else ''
+            if header: body += f'<h2 style=\"text-align:center;color:#d4af37\">{header}</h2>'
+            body += f'<div class=\"stripe\">{text}{img}</div>'
+            if source: body += f'<p style=\"text-align:center\">Source: <a href=\"{source}\">{source}</a></p>'
+            if citation: body += f'<p style=\"text-align:center;font-style:italic\">{citation}</p>'
+            body += '<hr>'
+          
+          note_html = f'<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>{title}</title><style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px}}a{{color:#d4af37}}img{{max-width:100%;border-radius:15px}}</style></head><body><div class=\"note\"><h1>{title}</h1>{body}<p style=\"text-align:center\"><a href=\"index.html\">All Law Notes</a></p></div></body></html>'
+          
+          # Upload note
+          requests.put(f'https://api.github.com/repos/${{ github.repository }}/contents/{slug}', 
+                       headers={{'Authorization': 'token ${{ secrets.GITHUB_TOKEN }}'}}, 
+                       json={{'message': f'Publish: {title}', 'content': base64.b64encode(note_html.encode()).decode()}})
+          
+          # Update index
+          r = requests.get(f'https://api.github.com/repos/${{ github.repository }}/contents/index.html', 
+                           headers={{'Authorization': 'token ${{ secrets.GITHUB_TOKEN }}'}})
+          content = base64.b64decode(r.json()['content']).decode()
+          match = re.search(r'const notes = (\[[\s\S]*?\]);', content)
+          notes = json.loads(match.group(1)) if match else []
+          if not any(n['file'] == slug for n in notes):
+            notes.append({{'title': title, 'file': slug}})
+            notes.sort(key=lambda n: n['title'])
+            new_notes = f'const notes = {json.dumps(notes, indent=2)};'
+            content = re.sub(r'const notes = \[[\s\S]*?\];', new_notes, content)
+            requests.put(f'https://api.github.com/repos/${{ github.repository }}/contents/index.html', 
+                         headers={{'Authorization': 'token ${{ secrets.GITHUB_TOKEN }}'}}, 
+                         json={{'message': f'Index: add {title}', 'content': base64.b64encode(content.encode()).decode(), 'sha': r.json()['sha']}})
+          print('Success!')
+          "
