@@ -20,11 +20,14 @@ jobs:
           python3 -c "
           import os, json, base64, re, requests
 
-          data = json.loads(os.environ['GITHUB_EVENT_PATH'])
-          payload = data.get('client_payload', {})
-          title = payload['title']
-          slug = payload['slug']
-          sections = payload['sections']
+          # This is the correct way — read from GITHUB_EVENT_PATH
+          with open(os.environ['GITHUB_EVENT_PATH']) as f:
+            event = json.load(f)
+          data = event.get('client_payload', {})
+
+          title = data.get('title', 'Untitled')
+          slug = data.get('slug', 'untitled.html')
+          sections = data.get('sections', [])
 
           html = ''
           for sec in sections:
@@ -50,19 +53,18 @@ jobs:
             if citation: html += f'<p style=\"text-align:center;font-style:italic\">{citation}</p>'
             html += '<hr>'
 
-          note = f'''<!DOCTYPE html>
-          <html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
+          note_html = f'''<!DOCTYPE html>
+          <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
           <title>{title}</title>
           <style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:#fff;padding:30px;border-radius:12px;margin:20px 0}}a{{color:#d4af37}}img{{max-width:100%}}</style>
-          </head><body><div class=\"note\"><h1>{title}</h1>{html}<p style=\"text-align:center\"><a href=\"index.html\">All Law Notes</a></p></div></body></html>'''
+          </head><body><div class="note"><h1>{title}</h1>{html}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>'''
 
           requests.put(
             f'https://api.github.com/repos/${{ github.repository }}/contents/{slug}',
             headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
-            json={'message': f'Publish: {title}', 'content': base64.b64encode(note.encode()).decode(), 'branch': 'main'}
+            json={'message': f'Publish: {title}', 'content': base64.b64encode(note_html.encode()).decode(), 'branch': 'main'}
           )
 
-          # Update index
           r = requests.get(f'https://api.github.com/repos/${{ github.repository }}/contents/index.html',
                            headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'})
           content = base64.b64decode(r.json()['content']).decode()
@@ -72,11 +74,4 @@ jobs:
             if m: notes = json.loads(m.group(1))
             notes.append({'title': title, 'file': slug})
             notes.sort(key=lambda x: x['title'].lower())
-            content = re.sub(r'const notes = \[[\s\S]*?\];', f'const notes = {json.dumps(notes, indent=2)};', content)
-            requests.put(
-              f'https://api.github.com/repos/${{ github.repository }}/contents/index.html',
-              headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
-              json={'message': f'Add {title} to index', 'content': base64.b64encode(content.encode()).decode(), 'sha': r.json()['sha'], 'branch': 'main'}
-            )
-          print('Success!')
-          "
+            content
