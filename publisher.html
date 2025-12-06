@@ -30,9 +30,9 @@
 </head>
 <body>
 
-<!-- VERSION 4.9 – FINAL WORKING (Dec 5 2025) -->
+<!-- VERSION 4.10 – FINAL WORKING WITH NEW TOKEN (Dec 5 2025) -->
 
-<div class="version">VERSION 4.9 – FINAL WORKING (Dec 5 2025)</div>
+<div class="version">VERSION 4.10 – FINAL WORKING (Dec 5 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -53,112 +53,136 @@
 </div>
 
 <script>
-const GITHUB_TOKEN = "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";
+const GITHUB_TOKEN = "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";
 const REPO = "iowacattails/my-law-notes";
+const COMMITTER = { name: "Law Notes Publisher", email: "publisher@law-notes.com" };
 
-async function api(path = "", method = "GET", body = null) {
-  const url = `https://api.github.com/repos/${REPO}/contents/${path}`;
-  const headers = {
-    Authorization: `token ${GITHUB_TOKEN}`,
-    Accept: "application/vnd.github.v3+json"
+const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke","Bill of Rights","Constitution","Habeas Corpus","Jury Nullification"];
+
+let sectionCount = 0;
+
+function addSection() {
+  sectionCount++;
+  const div = document.createElement('div');
+  div.className = 'section';
+  div.innerHTML = `
+    <h2 style="color:#d4af37;text-align:center;margin-bottom:35px;font-size:28px">Note Section ${sectionCount}</h2>
+    <label>Tags (tap to select)</label>
+    <div class="tags" id="tags${sectionCount}"></div>
+    <input type="text" class="custom-tags" placeholder="Add custom tags, comma-separated">
+    <div class="header-box" contenteditable="true"></div>
+    <label>Body of Note</label>
+    <textarea class="content" placeholder="Write your full note here..."></textarea>
+    <label>Add Image (auto-uploaded)</label>
+    <input type="file" class="image" accept="image/*">
+    <img class="img-prev" style="display:none">
+    <label>Source (link or book)</label>
+    <input type="text" class="source">
+    <label>Citation (quote/reference)</label>
+    <input type="text" class="citation">
+  `;
+  document.getElementById('sections').appendChild(div);
+
+  const tagBox = document.getElementById(`tags${sectionCount}`);
+  tagsList.forEach(t => {
+    const b = document.createElement('span');
+    b.className = 'tag-btn';
+    b.textContent = t;
+    b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
+    tagBox.appendChild(b);
+  });
+
+  div.querySelectorAll('input, textarea, .header-box').forEach(el => el.addEventListener('input', previewAll));
+  div.querySelector('.image').onchange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      const prev = e.target.parentElement.querySelector('.img-prev');
+      prev.src = URL.createObjectURL(file);
+      prev.style.display = 'block';
+      previewAll();
+    }
   };
-  const opts = { method, headers };
-  if (body) opts.body = JSON.stringify({ ...body, branch: "main", committer: { name: "Publisher", email: "pub@law.com" } });
+  previewAll();
+}
 
-  const r = await fetch(url, opts);
-  if (!r.ok) {
-    const e = await r.text();
-    throw new Error(`GitHub ${r.status}: ${e}`);
-  }
+async function githubAPI(path, opts = {}) {
+  const url = `https://api.github.com/repos/${REPO}/contents/${path}`;
+  const config = {
+    method: opts.method || 'GET',
+    headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+  };
+  if (opts.body) config.body = JSON.stringify({ ...opts.body, branch: 'main', committer: COMMITTER });
+  const r = await fetch(url, config);
+  if (!r.ok) throw new Error(`GitHub ${r.status}: ${await r.text()}`);
   return r.json();
 }
 
 async function testAPI() {
-  try { await api(); alert("API GOOD! Ready to publish."); }
-  catch (e) { alert("API FAIL: " + e.message); }
+  try { await githubAPI(''); alert('API GOOD! Ready to publish.'); }
+  catch (e) { alert('API FAIL: ' + e.message); }
 }
 
 function previewAll() {
-  const title = document.getElementById("page-title").value.trim() || "Preview";
-  let h = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold">${title}</h1>`;
-  document.querySelectorAll(".section").forEach(s => {
-    const tags = [...s.querySelectorAll(".tag-btn.selected")].map(b=>b.textContent).join(" · ");
-    const header = s.querySelector(".header-box").innerText.trim();
-    const body = s.querySelector(".content").value.replace(/\n/g,"<br>");
-    const img = s.querySelector(".img-prev").style.display==="block" ? s.querySelector(".img-prev").outerHTML : "";
-    const src = s.querySelector(".source").value.trim();
-    const cit = s.querySelector(".citation").value.trim();
-    if (tags) h += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
-    if (header) h += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
-    h += `<div class="stripe">${body}${img}</div>`;
-    if (src) h += `<p style="text-align:center">Source: <a href="${src}" style="color:#d4af37">${src}</a></p>`;
-    if (cit) h += `<p style="text-align:center;font-style:italic">${cit}</p><hr style="border:1px dashed #d4af37">`;
+  const title = document.getElementById('page-title').value.trim() || "Preview Note";
+  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
+
+  document.querySelectorAll('.section').forEach(sec => {
+    const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent),
+                  ...sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean)].join(' · ');
+    const header = sec.querySelector('.header-box').innerText.trim();
+    const body = sec.querySelector('.content').value.replace(/\n/g,'<br>');
+    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
+    const source = sec.querySelector('.source').value.trim();
+    const citation = sec.querySelector('.citation').value.trim();
+
+    if (tags) html += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
+    if (header) html += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
+    html += `<div class="stripe">${body}${img}</div>`;
+    if (source) html += `<p style="text-align:center">Source: <a href="${source}" style="color:#d4af37">${source}</a></p>`;
+    if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
+    html += `<hr style="border:1px dashed #d4af37">`;
   });
-  document.getElementById("preview").innerHTML = h;
+
+  document.getElementById('preview').innerHTML = html;
 }
 
 async function publishAll() {
   try {
-    // create images folder if missing
-    try { await api("images/.gitkeep", "PUT", { message: "init images", content: "" }); } catch(e) {}
+    try { await githubAPI('images/.gitkeep', 'PUT', { message: 'Create images folder', content: '' }); } catch(e) {}
 
-    const title = document.getElementById("page-title").value.trim() || "Note";
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"") + ".html";
+    const title = document.getElementById('page-title').value.trim() || "Untitled";
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
 
-    // upload images
-    for (const sec of document.querySelectorAll(".section")) {
-      const file = sec.querySelector(".image").files[0];
-      if (file) {
-        const name = prompt("Image filename", file.name) || `img-${Date.now()}.jpg`;
-        const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(",")[1]); fr.readAsDataURL(file); });
-        await api(`images/${name}`, "PUT", { message: `Add ${name}`, content: b64 });
+    for (const sec of document.querySelectorAll('.section')) {
+      const input = sec.querySelector('.image');
+      if (input.files?.[0]) {
+        const file = input.files[0];
+        const ext = file.name.split('.').pop() || 'jpg';
+        const name = prompt("Image filename", `img-${Date.now()}.${ext}`) || `img-${Date.now()}.${ext}`;
+        const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',')[1]); fr.readAsDataURL(file); });
+        await githubAPI(`images/${name}`, 'PUT', { message: `Add ${name}`, content: b64 });
       }
     }
 
-    // create note
-    const noteHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px}a{color:#d4af37}img{max-width:100%;border-radius:15px}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById("preview").innerHTML}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+    const noteHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:35px;border-radius:15px}a{color:#d4af37}img{max-width:100%;border-radius:15px}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById('preview').innerHTML}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
 
-    await api(slug, "PUT", { message: `Publish: ${title}`, content: btoa(unescape(encodeURIComponent(noteHTML))) });
+    await githubAPI(slug, 'PUT', { message: `Publish: ${title}`, content: btoa(unescape(encodeURIComponent(noteHTML))) });
 
-    // update index grid
-    const idx = await api("index.html");
+    const idx = await githubAPI('index.html');
     let content = atob(idx.content);
-    const match = content.match(/const notes = (\[[\s\S]*?\]);/);
-    let notes = match ? JSON.parse(match[1]) : [];
+    const notesMatch = content.match(/const notes = (\[[\s\S]*?\]);/);
+    let notes = notesMatch ? JSON.parse(notesMatch[1]) : [];
     if (!notes.some(n => n.file === slug)) {
       notes.push({ title, file: slug });
       notes.sort((a,b) => a.title.localeCompare(b.title));
       content = content.replace(/const notes = \[[\s\S]*?\];/, `const notes = ${JSON.stringify(notes, null, 2)};`);
-      await api("index.html", "PUT", { message: `Index: add ${title}`, content: btoa(content), sha: idx.sha });
+      await githubAPI('index.html', 'PUT', { message: `Index: add ${title}`, content: btoa(content), sha: idx.sha });
     }
 
-    alert(`VERSION 4.9 SUCCESS!\nhttps://iowacattails.github.io/my-law-notes/${slug}\nRefresh main page – your button is there.`);
+    alert(`VERSION 4.10 SUCCESS!\nhttps://iowacattails.github.io/my-law-notes/${slug}\nRefresh main page – your button is there.`);
   } catch (e) { alert("Failed: " + e.message); }
 }
 
-// init
-let sectionCount = 0;
-function addSection() {
-  sectionCount++;
-  const d = document.createElement("div"); d.className = "section";
-  d.innerHTML = `<h2 style="color:#d4af37;text-align:center">Section ${sectionCount}</h2><label>Tags</label><div class="tags" id="t${sectionCount}"></div><input class="custom-tags" placeholder="custom tags"><div class="header-box" contenteditable></div><label>Body</label><textarea class="content"></textarea><label>Image</label><input type="file" class="image" accept="image/*"><img class="img-prev" style="display:none"><label>Source</label><input class="source"><label>Citation</label><input class="citation">`;
-  document.getElementById("sections").appendChild(d);
-  const tb = document.getElementById(`t${sectionCount}`);
-  ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke","Bill of Rights","Constitution","Habeas Corpus","Jury Nullification"].forEach(t => {
-    const b = document.createElement("span"); b.className="tag-btn"; b.textContent=t;
-    b.onclick = () => { b.classList.toggle("selected"); previewAll(); };
-    tb.appendChild(b);
-  });
-  d.querySelectorAll("input,textarea,.header-box").forEach(el => el.oninput = previewAll);
-  d.querySelector(".image").onchange = e => {
-    if (e.target.files[0]) {
-      const prev = d.querySelector(".img-prev");
-      prev.src = URL.createObjectURL(e.target.files[0]);
-      prev.style.display = "block";
-      previewAll();
-    }
-  };
-}
 addSection();
 previewAll();
 </script>
