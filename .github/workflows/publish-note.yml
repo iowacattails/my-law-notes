@@ -11,21 +11,20 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Publish the note
+      - name: Publish note
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}   # ← THIS IS THE ONLY LINE THAT MATTERS
-          PAYLOAD: ${{ toJSON(github.event.client_payload) }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
-          python3 - <<'PY'
+          python3 -c "
           import os, json, base64, re, requests
 
-          data = json.loads(os.environ['PAYLOAD'])
-          title = data['title']
-          slug = data['slug']
-          sections = data['sections']
+          data = json.loads(os.environ['GITHUB_EVENT_PATH'])
+          payload = data.get('client_payload', {})
+          title = payload['title']
+          slug = payload['slug']
+          sections = payload['sections']
 
           html = ''
           for sec in sections:
@@ -35,51 +34,49 @@ jobs:
             img = ''
             if sec.get('image'):
               img_bytes = base64.b64decode(sec['image'])
-              img_name = f"img-{os.urandom(4).hex()}.jpg"
-              img_path = f"images/{img_name}"
+              img_name = f'img-{os.urandom(4).hex()}.jpg'
               requests.put(
-                f"https://api.github.com/repos/${{ github.repository }}/contents/{img_path}",
-                headers={"Authorization": f"token {os.environ['GITHUB_TOKEN']}"},
-                json={"message": f"Add {img_name}", "content": base64.b64encode(img_bytes).decode(), "branch": "main"}
+                f'https://api.github.com/repos/${{ github.repository }}/contents/images/{img_name}',
+                headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
+                json={'message': 'Add image', 'content': base64.b64encode(img_bytes).decode(), 'branch': 'main'}
               )
-              img = f'<br><img src="{img_path}">'
+              img = f'<br><img src=\"images/{img_name}\">'
             source = sec.get('source', '')
             citation = sec.get('citation', '')
-            if tags: html += f'<p style="text-align:center;color:#b8860b"><strong>{tags}</strong></p>'
-            if header: html += f'<h2 style="text-align:center;color:#d4af37">{header}</h2>'
-            html += f'<div class="stripe">{body}{img}</div>'
-            if source: html += f'<p style="text-align:center">Source: <a href="{source}">{source}</a></p>'
-            if citation: html += f'<p style="text-align:center;font-style:italic">{citation}</p>'
+            if tags: html += f'<p style=\"text-align:center;color:#b8860b\"><strong>{tags}</strong></p>'
+            if header: html += f'<h2 style=\"text-align:center;color:#d4af37\">{header}</h2>'
+            html += f'<div class=\"stripe\">{body}{img}</div>'
+            if source: html += f'<p style=\"text-align:center\">Source: <a href=\"{source}\">{source}</a></p>'
+            if citation: html += f'<p style=\"text-align:center;font-style:italic\">{citation}</p>'
             html += '<hr>'
 
-          note_html = f'''<!DOCTYPE html>
-          <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          note = f'''<!DOCTYPE html>
+          <html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
           <title>{title}</title>
-          <style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:#fff;padding:30px;border-radius:12px;margin:20px 0}}a{{color:#d4af37}}img{{max-width:100%;border-radius:15px}}</style>
-          </head><body><div class="note"><h1>{title}</h1>{html}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>'''
+          <style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:#fff;padding:30px;border-radius:12px;margin:20px 0}}a{{color:#d4af37}}img{{max-width:100%}}</style>
+          </head><body><div class=\"note\"><h1>{title}</h1>{html}<p style=\"text-align:center\"><a href=\"index.html\">All Law Notes</a></p></div></body></html>'''
 
           requests.put(
-            f"https://api.github.com/repos/${{ github.repository }}/contents/{slug}",
-            headers={"Authorization": f"token {os.environ['GITHUB_TOKEN']}"},
-            json={"message": f"Publish: {title}", "content": base64.b64encode(note_html.encode()).decode(), "branch": "main"}
+            f'https://api.github.com/repos/${{ github.repository }}/contents/{slug}',
+            headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
+            json={'message': f'Publish: {title}', 'content': base64.b64encode(note.encode()).decode(), 'branch': 'main'}
           )
 
-          r = requests.get(f"https://api.github.com/repos/${{ github.repository }}/contents/index.html",
-                           headers={"Authorization": f"token {os.environ['GITHUB_TOKEN']}"})
+          # Update index
+          r = requests.get(f'https://api.github.com/repos/${{ github.repository }}/contents/index.html',
+                           headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'})
           content = base64.b64decode(r.json()['content']).decode()
           if slug not in content:
             notes = []
-            match = re.search(r'const notes = (\[[\s\S]*?\]);', content)
-            if match:
-              notes = json.loads(match.group(1))
-            notes.append({"title": title, "file": slug})
-            notes.sort(key=lambda x: x["title"].lower())
-            new_notes = f"const notes = {json.dumps(notes, indent=2)};"
-            content = re.sub(r'const notes = \[[\s\S]*?\];', new_notes, content)
+            m = re.search(r'const notes = (\[[\s\S]*?\]);', content)
+            if m: notes = json.loads(m.group(1))
+            notes.append({'title': title, 'file': slug})
+            notes.sort(key=lambda x: x['title'].lower())
+            content = re.sub(r'const notes = \[[\s\S]*?\];', f'const notes = {json.dumps(notes, indent=2)};', content)
             requests.put(
-              f"https://api.github.com/repos/${{ github.repository }}/contents/index.html",
-              headers={"Authorization": f"token {os.environ['GITHUB_TOKEN']}"},
-              json={"message": f"Index: add {title}", "content": base64.b64encode(content.encode()).decode(), "sha": r.json()['sha'], "branch": "main"}
+              f'https://api.github.com/repos/${{ github.repository }}/contents/index.html',
+              headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
+              json={'message': f'Add {title} to index', 'content': base64.b64encode(content.encode()).decode(), 'sha': r.json()['sha'], 'branch': 'main'}
             )
-          print("Published successfully!")
-          PY
+          print('Success!')
+          "
