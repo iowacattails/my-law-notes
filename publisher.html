@@ -12,7 +12,7 @@
   input,textarea{width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
   textarea{min-height:240px;resize:vertical}
   .tags{display:flex;flex-wrap:wrap;gap:12px;margin:15px 0 20px}
-  .tag-btn{background:#444;padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
+  .tag-btn{background:#444;padding:padding:9px 16px;border-radius:25px;cursor:pointer;font-size:15px}
   .tag-btn.selected{background:#d4af37;color:#000;font-weight:bold}
   .header-box{width:100%;padding:12px;background:#333;border:3px solid #d4af37;color:#d4af37;border-radius:10px;font-size:18px;text-align:center;margin:20px 0}
   button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
@@ -27,9 +27,9 @@
 </head>
 <body>
 
-<!-- VERSION 5.0 – YOUR ORIGINAL BEAUTY + FULLY WORKING (Dec 5 2025) -->
+<!-- VERSION 5.1 – YOUR ORIGINAL 4.2 BEAUTY + FULLY WORKING (Dec 5 2025) -->
 
-<div class="version">VERSION 5.0 – YOUR ORIGINAL BEAUTY + FULLY WORKING (Dec 5 2025)</div>
+<div class="version">VERSION 5.1 – YOUR ORIGINAL BEAUTY + FULLY WORKING (Dec 5 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -88,32 +88,33 @@ function addSection() {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = ev => d.querySelector('.img-prev').src = ev.target.result;
+      reader.onload = ev => {
+        d.querySelector('.img-prev').src = ev.target.result;
+        d.querySelector('.img-prev').style.display = 'block';
+      };
       reader.readAsDataURL(file);
-      d.querySelector('.img-prev').style.display = 'block';
       previewAll();
     }
-    previewAll();
   };
 }
 
 function previewAll() {
   let html = '';
   document.querySelectorAll('.section').forEach(sec => {
-    const selectedTags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
-    const customTags = sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-    const allTags = [...selectedTags, ...customTags].join(' · ');
+    const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
+    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = [...selected, ...custom].join(' · ');
     const header = sec.querySelector('.header-box').innerText.trim();
-    const body = sec.querySelector('.content').value.replace(/\n/g,'<br>);
+    const text = sec.querySelector('.content').value.replace(/\n/g,'<br>');
     const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
-    const source = sec.querySelector('.source').value.trim();
-    const citation = sec.querySelector('.citation').value.trim();
+    const src = sec.querySelector('.source').value.trim();
+    const cit = sec.querySelector('.citation').value.trim();
 
-    if (allTags) html += `<p style="text-align:center;color:#b8860b"><strong>${allTags}</strong></p>`;
+    if (tags) html += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
     if (header) html += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
-    html += `<div class="stripe">${body}${img}</div>`;
-    if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
-    if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
+    html += `<div class="stripe">${text}${img}</div>`;
+    if (src) html += `<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`;
+    if (cit) html += `<p style="text-align:center;font-style:italic">${cit}</p>`;
     html += '<hr>';
   });
   document.getElementById('preview').innerHTML = html;
@@ -142,9 +143,14 @@ async function publishAll() {
       body: JSON.stringify({ event_type: 'publish-law-note', client_payload: data })
     });
 
-    if (r.ok) alert(`SUCCESS! Published "${title}"\nRefresh main page to see your new button.`);
-    else throw new Error(await r.text());
-  } catch (e) { alert("Publish failed: " + e.message); }
+    if (r.ok) {
+      alert(`SUCCESS! "${title}" published.\nRefresh the main page – your new button is there.`);
+    } else {
+      throw new Error(await r.text());
+    }
+  } catch (e) {
+    alert("Publish failed: " + e.message);
+  }
 }
 
 addSection();
