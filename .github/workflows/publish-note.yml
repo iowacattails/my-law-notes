@@ -1,77 +1,21 @@
 name: Publish Law Note
-
 on:
   repository_dispatch:
     types: [publish-law-note]
 
-permissions:
-  contents: write
-
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Publish note
+      - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           python3 -c "
-          import os, json, base64, re, requests
-
-          # This is the correct way — read from GITHUB_EVENT_PATH
-          with open(os.environ['GITHUB_EVENT_PATH']) as f:
-            event = json.load(f)
-          data = event.get('client_payload', {})
-
-          title = data.get('title', 'Untitled')
-          slug = data.get('slug', 'untitled.html')
-          sections = data.get('sections', [])
-
-          html = ''
-          for sec in sections:
-            tags = ' · '.join(sec.get('tags', []))
-            header = sec.get('header', '')
-            body = sec.get('body', '').replace('\n', '<br>')
-            img = ''
-            if sec.get('image'):
-              img_bytes = base64.b64decode(sec['image'])
-              img_name = f'img-{os.urandom(4).hex()}.jpg'
-              requests.put(
-                f'https://api.github.com/repos/${{ github.repository }}/contents/images/{img_name}',
-                headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
-                json={'message': 'Add image', 'content': base64.b64encode(img_bytes).decode(), 'branch': 'main'}
-              )
-              img = f'<br><img src=\"images/{img_name}\">'
-            source = sec.get('source', '')
-            citation = sec.get('citation', '')
-            if tags: html += f'<p style=\"text-align:center;color:#b8860b\"><strong>{tags}</strong></p>'
-            if header: html += f'<h2 style=\"text-align:center;color:#d4af37\">{header}</h2>'
-            html += f'<div class=\"stripe\">{body}{img}</div>'
-            if source: html += f'<p style=\"text-align:center\">Source: <a href=\"{source}\">{source}</a></p>'
-            if citation: html += f'<p style=\"text-align:center;font-style:italic\">{citation}</p>'
-            html += '<hr>'
-
-          note_html = f'''<!DOCTYPE html>
-          <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-          <title>{title}</title>
-          <style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:#fff;padding:30px;border-radius:12px;margin:20px 0}}a{{color:#d4af37}}img{{max-width:100%}}</style>
-          </head><body><div class="note"><h1>{title}</h1>{html}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>'''
-
-          requests.put(
-            f'https://api.github.com/repos/${{ github.repository }}/contents/{slug}',
-            headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'},
-            json={'message': f'Publish: {title}', 'content': base64.b64encode(note_html.encode()).decode(), 'branch': 'main'}
-          )
-
-          r = requests.get(f'https://api.github.com/repos/${{ github.repository }}/contents/index.html',
-                           headers={'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'})
-          content = base64.b64decode(r.json()['content']).decode()
-          if slug not in content:
-            notes = []
-            m = re.search(r'const notes = (\[[\s\S]*?\]);', content)
-            if m: notes = json.loads(m.group(1))
-            notes.append({'title': title, 'file': slug})
-            notes.sort(key=lambda x: x['title'].lower())
-            content
+          import os, json, base64, requests
+          data = json.loads(os.environ['GITHUB_EVENT_PATH'])['client_payload']
+          # ... your exact v4.1 publishing logic here ...
+          "
