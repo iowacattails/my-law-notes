@@ -1,4 +1,4 @@
-<!-- VERSION 4.1 — Final + back-to-index link -->
+<!-- VERSION 7.1 with 4.1 features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +8,7 @@
 <style>
   body{font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
   .version{font-size:14px;color:#d4af37;text-align:center;margin-bottom:8px}
-  .top{width:100%;padding:padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
+  .top{width:100%;padding:16px;font-size:22px;background:#333;border:4px solid #d4af37;color:white;border-radius:12px;text-align:center;margin-bottom:25px}
   label{display:block;margin:18px 0 8px;color:#d4af37;font-weight:bold;font-size:18px}
   input,textarea{width:100%;padding:14px;background:#333;border:3px solid #d4af37;color:white;border-radius:10px;box-sizing:border-box;font-size:17px}
   textarea{min-height:240px;resize:vertical}
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 4.1 — Final</div>
+<div class="version">VERSION 7.1 — Final</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -45,11 +45,12 @@
 <div class="back"><a href="index.html">← Back to All Law Notes</a></div>
 
 <script>
-const TOKEN = const APP_ID = "2424009";
+
+const APP_ID = "2424009";
 const INSTALLATION_ID = "98364034";
 
 async function getAppToken() {
-  const PRIVATE_KEY = `${{ secrets.APP_PRIVATE_KEY }}`.replace(/\\n/g, "\n");
+  const PRIVATE_KEY = secrets.APP_PRIVATE_KEY.replace(/\\n/g, "\n");
   const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const payload = btoa(JSON.stringify({ iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+600, iss: APP_ID }));
   const token = header + "." + payload;
