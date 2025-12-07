@@ -28,9 +28,9 @@
 </head>
 <body>
 
-<!-- VERSION 6.1 – FINAL + ALL FEATURES (Dec 6 2025) -->
+<!-- VERSION 6.3 – FULL v4.2 LOOK + ALL FEATURES + WORKING (Dec 6 2025) -->
 
-<div class="version">VERSION 6.1 – FINAL + ALL FEATURES (Dec 6 2025)</div>
+<div class="version">VERSION 6.3 – FULL v4.2 LOOK + ALL FEATURES (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -129,7 +129,7 @@ function previewAll() {
 
   document.querySelectorAll('.section').forEach(sec => {
     const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
-    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trimBlake.trim()).filter(Boolean);
+    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const tags = [...selected, ...custom].join(' · ');
     let header = sec.querySelector('.header-box').innerText.trim();
     if (header === 'Section Header / Context') header = '';
@@ -208,7 +208,7 @@ async function publishAll() {
       });
     }
 
-    alert(`SUCCESS! "${title}" published.\nRefresh the main page to see your new button.`);
+    alert(`SUCCESS! "${title}" published.\nRefresh main page to see your new button.`);
   } catch (e) {
     alert("Publish failed: " + e.message);
   }
