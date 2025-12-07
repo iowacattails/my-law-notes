@@ -1,4 +1,4 @@
-<!-- VERSION 7.1 with 4.1 features -->
+<!-- VERSION 7.2 with 4.1 features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 7.1 — Final</div>
+<div class="version">VERSION 7.2 — Final</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -50,7 +50,7 @@ const APP_ID = "2424009";
 const INSTALLATION_ID = "98364034";
 
 async function getAppToken() {
-  const PRIVATE_KEY = secrets.APP_PRIVATE_KEY.replace(/\\n/g, "\n");
+  const PRIVATE_KEY = "${{ secrets.APP_PRIVATE_KEY }}".replace(/\\n/g, "\n");
   const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const payload = btoa(JSON.stringify({ iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+600, iss: APP_ID }));
   const token = header + "." + payload;
@@ -125,37 +125,52 @@ async function upload(path, content, msg) {
 
 async function publishAll() {
   try {
-    const token = await getAppToken();  // ← uses your GitHub App
-    const title = document.getElementById('page-title').value.trim() || 'new-note';
-    const fn = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-    let body = '';
+    const title = document.getElementById('page-title').value.trim() || "Untitled";
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
+    const sections = [];
 
-    for (const sec of document.querySelectorAll('.section')) {
-      const file = sec.querySelector('.image').files[0];
-      let img = '';
-      if (file) {
-        const name = prompt('Image filename (with extension)', file.name) || file.name;
+    document.querySelectorAll('.section').forEach(sec => {
+      const imageFile = sec.querySelector('.image').files[0];
+      const imageB64 = imageFile ? new Promise(r => {
         const fr = new FileReader();
-        const b64 = await new Promise(r => { fr.onload = e => r(e.target.result.split(',')[1]); fr.readAsDataURL(file); });
-        await upload(`images/${name}`, b64, `Add ${name}`);
-        img = `images/${name}`;
-      }
-      const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
-                   .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
-                   .join(' · ');
+        fr.onload = e => r(e.target.result.split(',')[1]);
+        fr.readAsDataURL(imageFile);
+      }) : null;
+
+      const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent),
+                    ...sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean)];
       const header = sec.querySelector('.header-box').innerText.trim();
-      const text = sec.querySelector('.content').value.replace(/\n/g,'<br>') + (img?`<br><img src="${img}">`:'');
-      const src = sec.querySelector('.source').value.trim();
-      const cit = sec.querySelector('.citation').value.trim();
-      body += `${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}`;
-      if (header) body += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
-      body += `<div class="stripe">${text}</div>${src?`<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`:''}${cit?`<p style="text-align:center;font-style:italic">${cit}</p>`:''}<hr>`;
+      const body = sec.querySelector('.content').value;
+      const source = sec.querySelector('.source').value.trim();
+      const citation = sec.querySelector('.citation').value.trim();
+
+      sections.push({ tags, header, body, image: imageB64, source, citation });
+    });
+
+    const payload = { title, slug, sections: [] };
+    for (const s of sections) {
+      payload.sections.push({
+        tags: s.tags,
+        header: s.header,
+        body: s.body,
+        image: s.image ? await s.image : null,
+        source: s.source,
+        citation: s.citation
+      });
     }
 
-    const finalHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>${body}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+    const r = await fetch("https://api.github.com/repos/iowacattails/my-law-notes/dispatches", {
+      method: "POST",
+      headers: { "Accept": "application/vnd.github.v3+json" },
+      body: JSON.stringify({ event_type: "publish-law-note", client_payload: payload })
+    });
 
-    await upload(fn, btoa(unescape(encodeURIComponent(finalHTML))), `Create note: ${title}`);
-    alert(`SUCCESS! Note is live:\nhttps://iowacattails.github.io/my-law-notes/${fn}`);
+    if (r.ok) {
+      alert("SUCCESS! Publishing started — refresh main page in 20 seconds.");
+    } else {
+      const err = await r.text();
+      alert("Failed: " + err);
+    }
   } catch (e) {
     alert("Error: " + e.message);
   }
