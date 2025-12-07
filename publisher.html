@@ -17,9 +17,10 @@
   .header-box{width:100%;padding:12px;background:#333;border:3px solid #d4af37;color:#d4af37;border-radius:10px;font-size:18px;text-align:center;margin:20px 0}
   button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
   button:hover{background:gold}
+  .add-section-btn{background:#d4af37;color:#000;padding:10px 18px;border-radius:12px;font-size:16px;float:right;margin:10px}
   #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
   .stripe{background:#fff;padding:30px;border-radius:12px;margin:20px 0}
-  .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
+  .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37;position:relative}
   .back{text-align:center;margin:60px 0 20px;font-size:20px}
   .back a{color:#d4af37;text-decoration:underline}
   .img-prev{max-width:100%;border-radius:12px;margin:20px 0;display:block}
@@ -27,16 +28,15 @@
 </head>
 <body>
 
-<!-- VERSION 5.1 – ORIGINAL BEAUTY + NO YELLOW LINES (Dec 5 2025) -->
+<!-- VERSION 6.1 – FINAL + ADD SECTION BUTTON PER SECTION (Dec 6 2025) -->
 
-<div class="version">VERSION 5.1 – ORIGINAL BEAUTY + NO YELLOW LINES (Dec 5 2025)</div>
+<div class="version">VERSION 6.1 – FINAL + ADD SECTION BUTTON (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
 <div id="sections"></div>
 
 <div style="text-align:center;margin:40px 0">
-  <button onclick="addSection()">+ Add Another Section</button>
   <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
     Publish All (Images + Note + Index)
   </button>
@@ -47,16 +47,34 @@
 <div class="back"><a href="index.html">Back to All Law Notes</a></div>
 
 <script>
-const REPO = "iowacattails/my-law-notes";
+const APP_ID = "2424009";
+const INSTALLATION_ID = "98364034";
+
+async function getAppToken() {
+  const PRIVATE_KEY = `${{ secrets.APP_PRIVATE_KEY }}`.replace(/\\n/g, "\n");
+  const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const payload = btoa(JSON.stringify({ iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+600, iss: APP_ID }));
+  const token = header + "." + payload;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("pkcs8", enc.encode(PRIVATE_KEY), { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(token));
+  const jwt = token + "." + btoa(String.fromCharCode(...new Uint8Array(sig)));
+  const r = await fetch(`https://api.github.com/app/installations/${INSTALLATION_ID}/access_tokens`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${jwt}`, Accept: "application/vnd.github.v3+json" }
+  });
+  return (await r.json()).token;
+}
 
 let sectionCount = 0;
 const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke","Bill of Rights","Constitution","Habeas Corpus","Jury Nullification"];
 
 function addSection() {
   sectionCount++;
-  const d = document.createElement('div');
-  d.className = 'section';
-  d.innerHTML = `
+  const div = document.createElement('div');
+  div.className = 'section';
+  div.innerHTML = `
+    <button class="add-section-btn" onclick="addSection()">+ Add Another Section</button>
     <h2 style="color:#d4af37;text-align:center;margin-bottom:30px">Note Section ${sectionCount}</h2>
     <label>Tags (tap to select)</label>
     <div class="tags" id="tags${sectionCount}"></div>
@@ -72,82 +90,127 @@ function addSection() {
     <label>Citation (quote/reference)</label>
     <input type="text" class="citation">
   `;
-  document.getElementById('sections').appendChild(d);
+  document.getElementById('sections').appendChild(div);
 
-  const tb = document.getElementById(`tags${sectionCount}`);
+  const tagBox = div.querySelector(`#tags${sectionCount}`);
   tagsList.forEach(t => {
     const b = document.createElement('span');
     b.className = 'tag-btn';
     b.textContent = t;
     b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
-    tb.appendChild(b);
+    tagBox.appendChild(b);
   });
 
-  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
-  d.querySelector('.image').onchange = e => {
+  const headerBox = div.querySelector('.header-box');
+  headerBox.addEventListener('focus', () => { if (headerBox.innerText.trim() === 'Section Header / Context') headerBox.innerText = ''; });
+  headerBox.addEventListener('blur', () => { if (!headerBox.innerText.trim()) headerBox.innerText = 'Section Header / Context'; });
+  headerBox.addEventListener('input', previewAll);
+
+  div.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', previewAll));
+  div.querySelector('.image').onchange = e => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = ev => {
-        d.querySelector('.img-prev').src = ev.target.result;
-        d.querySelector('.img-prev').style.display = 'block';
+        const prev = e.target.parentElement.querySelector('.img-prev');
+        prev.src = ev.target.result;
+        prev.style.display = 'block';
+        previewAll();
       };
       reader.readAsDataURL(file);
-      previewAll();
     }
   };
+  previewAll();
 }
 
 function previewAll() {
-  let html = '';
+  const title = document.getElementById('page-title').value.trim() || "Untitled Note";
+  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
+
   document.querySelectorAll('.section').forEach(sec => {
     const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
     const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const tags = [...selected, ...custom].join(' · ');
-    const header = sec.querySelector('.header-box').innerText.trim();
-    const text = sec.querySelector('.content').value.replace(/\n/g,'<br>');
+    let header = sec.querySelector('.header-box').innerText.trim();
+    if (header === 'Section Header / Context') header = '';
+    const body = sec.querySelector('.content').value.replace(/\n/g,'<br>');
     const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
-    const src = sec.querySelector('.source').value.trim();
-    const cit = sec.querySelector('.citation').value.trim();
+    const source = sec.querySelector('.source').value.trim();
+    const citation = sec.querySelector('.citation').value.trim();
 
     if (tags) html += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
     if (header) html += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
-    html += `<div class="stripe">${text}${img}</div>`;
-    if (src) html += `<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`;
-    if (cit) html += `<p style="text-align:center;font-style:italic">${cit}</p>`;
-    html += '<hr>';
+    html += `<div class="stripe">${body}${img}</div>`;
+    if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
+    if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
+    html += '<hr style="border:1px dashed #d4af37">';
   });
+
   document.getElementById('preview').innerHTML = html;
 }
 
 async function publishAll() {
   try {
-    const title = document.getElementById('page-title').value.trim() || "new-note";
+    const token = await getAppToken();
+    const title = document.getElementById('page-title').value.trim() || "Untitled";
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
     const data = { title, slug, sections: [] };
 
-    for (const sec of document.querySelectorAll('.section')) {
+    document.querySelectorAll('.section').forEach(sec => {
       const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent),
                     ...sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean)];
-      const header = sec.querySelector('.header-box').innerText.trim();
+      let header = sec.querySelector('.header-box').innerText.trim();
+      if (header === 'Section Header / Context') header = '';
       const body = sec.querySelector('.content').value;
       const image = sec.querySelector('.image').files[0] ? await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',')[1]); fr.readAsDataURL(sec.querySelector('.image').files[0]); }) : null;
       const source = sec.querySelector('.source').value.trim();
       const citation = sec.querySelector('.citation').value.trim();
       data.sections.push({ tags, header, body, image, source, citation });
-    }
-
-    const r = await fetch(`https://api.github.com/repos/${REPO}/dispatches`, {
-      method: 'POST',
-      headers: { 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event_type: 'publish-law-note', client_payload: data })
     });
 
-    if (r.ok) {
-      alert(`SUCCESS! "${title}" published.\nRefresh the main page – your new button is there.`);
-    } else {
-      throw new Error(await r.text());
+    // Upload images
+    for (const sec of data.sections) {
+      if (sec.image) {
+        const name = prompt("Image filename (with extension)", `img-${Date.now()}.jpg`) || `img-${Date.now()}.jpg`;
+        const r = await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/images/${name}`, {
+          method: 'PUT',
+          headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+          body: JSON.stringify({ message: `Add ${name}`, content: sec.image, branch: 'main' })
+        });
+        if (!r.ok) throw new Error(`Image upload failed: ${await r.text()}`);
+      }
     }
+
+    // Build and upload note
+    const noteHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}.stripe{background:#fff;padding:30px;border-radius:12px;margin:20px 0}a{color:#d4af37}img{max-width:100%;border-radius:15px}</style></head><body><div class="note"><h1>${title}</h1>${document.getElementById('preview').innerHTML}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+
+    const rNote = await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/${slug}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+      body: JSON.stringify({ message: `Publish: ${title}`, content: btoa(unescape(encodeURIComponent(noteHTML))), branch: 'main' })
+    });
+    if (!rNote.ok) throw new Error(`Note upload failed: ${await rNote.text()}`);
+
+    // Update index
+    const idx = await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/index.html`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    const idxData = await idx.json();
+    let content = atob(unescape(encodeURIComponent(idxData.content)));
+    const match = content.match(/const notes = (\[[\s\S]*?\]);/);
+    let notes = match ? JSON.parse(match[1]) : [];
+    if (!notes.some(n => n.file === slug)) {
+      notes.push({ title, file: slug });
+      notes.sort((a,b) => a.title.localeCompare(b.title));
+      content = content.replace(/const notes = \[[\s\S]*?\];/, `const notes = ${JSON.stringify(notes, null, 2)};`);
+      await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/index.html`, {
+        method: 'PUT',
+        headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' },
+        body: JSON.stringify({ message: `Index: add ${title}`, content: btoa(unescape(encodeURIComponent(content))), sha: idxData.sha, branch: 'main' })
+      });
+    }
+
+    alert(`SUCCESS! "${title}" published.\nRefresh the main page to see your new button.`);
   } catch (e) {
     alert("Publish failed: " + e.message);
   }
