@@ -75,8 +75,87 @@
 
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
-  <button onclick="publishAll()" style="background
-    async function publishAll() {
+  <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
+    Publish All (Images + Note + Index)
+  </button>
+</div>
+
+<div id="preview"></div>
+
+<div class="back"><a href="index.html">Back to All Law Notes</a></div>
+
+<script>
+let sectionCount = 0;
+const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke"];
+
+function addSection() {
+  sectionCount++;
+  const d = document.createElement('div');
+  d.className = 'section';
+  d.innerHTML = `
+    <h2 style="color:#d4af37;text-align:center;margin-bottom:30px">Note Section ${sectionCount}</h2>
+    <label>Tags (tap to select)</label>
+    <div class="tags" id="tags${sectionCount}"></div>
+    <input type="text" class="custom-tags" placeholder="Add custom tags, comma-separated">
+    <div class="header-box" contenteditable="true">Section Header / Context</div>
+    <label>Body of Note</label>
+    <textarea class="content" placeholder="Write your full note here..."></textarea>
+    <label>Add Image (auto-uploaded)</label>
+    <input type="file" class="image" accept="image/*">
+    <img class="img-prev" style="display:none">
+    <div class="delete-btn-container"></div>
+    <label>Source (link or book)</label>
+    <input type="text" class="source">
+    <label>Citation (quote/reference)</label>
+    <input type="text" class="citation">
+  `;
+  document.getElementById('sections').appendChild(d);
+
+  const tagBox = d.querySelector(`#tags${sectionCount}`);
+  tagsList.forEach(tag => {
+    const btn = document.createElement('span');
+    btn.className = 'tag-btn';
+    btn.textContent = tag;
+    btn.onclick = () => { btn.classList.toggle('selected'); previewAll(); };
+    tagBox.appendChild(btn);
+  });
+
+  const imgInput = d.querySelector('.image');
+  const imgPrev = d.querySelector('.img-prev');
+  const delContainer = d.querySelector('.delete-btn-container');
+
+  imgInput.onchange = () => {
+    const file = imgInput.files[0];
+    delContainer.innerHTML = '';
+    imgPrev.style.display = 'none';
+
+    if (file) {
+      const name = prompt('Image filename (with extension)', file.name) || file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        imgPrev.src = e.target.result;
+        imgPrev.style.display = 'block';
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = "Remove Image";
+        delBtn.className = "delete-image-btn";
+        delBtn.onclick = () => {
+          imgInput.value = '';
+          imgPrev.style.display = 'none';
+          delBtn.remove();
+          previewAll();
+        };
+        delContainer.appendChild(delBtn);
+      };
+      reader.readAsDataURL(file);
+    }
+    previewAll();
+  };
+
+  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
+}
+
+async function publishAll() {
   try {
     const title = document.getElementById('page-title').value.trim() || "Untitled";
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
@@ -148,12 +227,13 @@ function previewAll() {
     if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
     if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
     html += '<hr style="border:1px dashed #d4af37">';
-  });  document.getElementById('preview').innerHTML = html;
+  });
+  document.getElementById('preview').innerHTML = html;
 }
-    document.addEventListener('input', previewAll);
+
+document.addEventListener('input', previewAll);
 document.addEventListener('change', previewAll);
 
-// Start with one section
 addSection();
 previewAll();
 </script>
