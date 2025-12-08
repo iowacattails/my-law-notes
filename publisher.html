@@ -64,8 +64,7 @@ function addSection() {
     <textarea class="content" placeholder="Write your full note here..."></textarea>
     <label>Add Image (auto-uploaded)</label>
     <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none">
-    <div class="delete-btn-container"></div>
+    <img class="img-prev" style="display:none;max-width:100%">
     <label>Source (link or book)</label>
     <input type="text" class="source">
     <label>Citation (quote/reference)</label>
@@ -73,7 +72,7 @@ function addSection() {
   `;
   document.getElementById('sections').appendChild(d);
 
-  const tb = d.querySelector(`#tags${sectionCount}`);
+  const tb = document.getElementById(`tags${sectionCount}`);
   tagsList.forEach(t => {
     const b = document.createElement('span');
     b.className = 'tag-btn';
@@ -82,38 +81,19 @@ function addSection() {
     tb.appendChild(b);
   });
 
-  const imgInput = d.querySelector('.image');
-  const imgPrev = d.querySelector('.img-prev');
-  const delContainer = d.querySelector('.delete-btn-container');
-
-  imgInput.onchange = () => {
-    const file = imgInput.files[0];
-    delContainer.innerHTML = '';
-    imgPrev.style.display = 'none';
-
+  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
+  d.querySelector('.image').onchange = () => {
+    const file = d.querySelector('.image').files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
-        imgPrev.src = e.target.result;
-        imgPrev.style.display = 'block';
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent = "Remove Image";
-        delBtn.className = "delete-image-btn";
-        delBtn.onclick = () => {
-          imgInput.value = '';
-          imgPrev.style.display = 'none';
-          delBtn.remove();
-          previewAll();
-        };
-        delContainer.appendChild(delBtn);
+        d.querySelector('.img-prev').src = e.target.result;
+        d.querySelector('.img-prev').style.display = 'block';
       };
       reader.readAsDataURL(file);
     }
     previewAll();
   };
-
-  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
 }
 
 async function publishAll() {
