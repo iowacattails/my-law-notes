@@ -1,4 +1,4 @@
-<!-- VERSION 4.1 — Vercel vs2.0 -->
+<!-- Vercel vs1 with 4.1 features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,13 +27,14 @@
 </head>
 <body>
 
-<div class="version">VERSION 4.1 — Final</div>
+<div class="version">VERSION 7.4— Final</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
 <div id="sections"></div>
 
-<div style="text-align:center;margin:margin:40px 0">
+<div style="text-align:center;margin:40px 0">
+
   <button onclick="addSection()">+ Add Another Section</button>
   <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
     Publish All (Images + Note + Index)
@@ -50,7 +51,7 @@ const APP_ID = "2424009";
 const INSTALLATION_ID = "98364034";
 
 async function getAppToken() {
-  const PRIVATE_KEY = secrets.APP_PRIVATE_KEY.replace(/\\n/g, "\n");
+  const PRIVATE_KEY = "${{ secrets.APP_PRIVATE_KEY }}".replace(/\\n/g, "\n");
   const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const payload = btoa(JSON.stringify({ iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+600, iss: APP_ID }));
   const token = header + "." + payload;
@@ -100,7 +101,7 @@ function addSection() {
     tb.appendChild(b);
   });
 
-  d.querySelectorAll('input, textarea, .header-box').forEach (el => el.oninput = previewAll);
+  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
   d.querySelector('.image').onchange = () => {
     const file = d.querySelector('.image').onchange = () => {
   const file = d.querySelector('.image').files[0];
@@ -137,6 +138,16 @@ function addSection() {
   }
   previewAll();
 };
+}
+
+async function upload(path, content, msg) {
+  const token = await getAppToken();
+  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${token}` },
+    body: JSON.stringify({ message: msg, content: content, branch: "main" })
+  });
+  if (!r.ok) throw new Error(await r.text());
 }
 
 async function publishAll() {
@@ -190,6 +201,8 @@ async function publishAll() {
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+
 }
 
 function previewAll() {
