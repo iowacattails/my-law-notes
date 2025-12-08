@@ -107,7 +107,7 @@ async function publishAll() {
         const b64 = await new Promise(r => { fr.onload = e => r(e.target.result.split(',')[1]); fr.readAsDataURL(file); });
         await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/images/${name}`, {
           method: 'PUT',
-          headers: { Authorization: 'token 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' },
+          headers: { Authorization: 'token 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' },
           body: JSON.stringify({ message: `Add ${name}`, content: b64, branch: "main" })
         });
         img = `images/${name}`;
