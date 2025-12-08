@@ -1,4 +1,4 @@
-<!-- VERSION 4.1 — Final + back-to-index link -->
+<!-- VERSION 4.1 — Vercel vs2.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,17 +100,43 @@ function addSection() {
     tb.appendChild(b);
   });
 
-  d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
+  d.querySelectorAll('input, textarea, .header-box').forEach (el => el.oninput = previewAll);
   d.querySelector('.image').onchange = () => {
-    const file = d.querySelector('.image').files[0];
-    if (file) {
-      const name = prompt('Image filename (with extension)', file.name) || file.name;
-      const reader = new FileReader();
-      reader.onload = e => d.querySelector('.img-prev').src = e.target.result;
-      reader.readAsDataURL(file);
-    }
-    previewAll();
-  };
+    const file = d.querySelector('.image').onchange = () => {
+  const file = d.querySelector('.image').files[0];
+  const prev = d.querySelector('.img-prev');
+  const container = d.querySelector('label[for]'); // just to have a parent
+
+  // Remove old delete button if exists
+  const oldBtn = d.querySelector('.delete-image-delete');
+  if (oldBtn) oldBtn.remove();
+
+  if (file) {
+    const name = prompt('Image filename (with extension)', file.name) || file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+
+      // Add delete button
+      const delBtn = document.createElement('button');
+      delBtn.textContent = "Remove Image";
+      delBtn.style = "margin-top:8px;background:#c44;color:white;padding:8px;border-radius:8px";
+      delBtn.className = "delete-image-btn";
+      delBtn.onclick = () => {
+        d.querySelector('.image').value = '';
+        prev.style.display = 'none';
+        delBtn.remove();
+        previewAll();
+      };
+      d.querySelector('label:nth-of-type(5)').after(delBtn); // after Add Image label
+    };
+    reader.readAsDataURL(file);
+  } else {
+    prev.style.display = 'none';
+  }
+  previewAll();
+};
 }
 
 async function publishAll() {
