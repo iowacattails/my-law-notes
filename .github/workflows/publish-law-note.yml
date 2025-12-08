@@ -1,0 +1,23 @@
+name: Publish Law Note
+on:
+  repository_dispatch:
+    types: [publish-law-note]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish note
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+        run: |
+          python3 -c "
+          import os, json, base64, requests, re
+          payload = json.loads(os.environ['GITHUB_EVENT_PATH'])['client_payload']
+          # ... (same Python code as before, using GITHUB_TOKEN)
+          # I'll give you the full script if you say "yes"
+          "
