@@ -1,4 +1,4 @@
-<!-- VERSION 7.9 w/ 4.1 festures  -->
+<!-- VERSION 4.1 — Final + back-to-index link -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 7.9 — Final</div>
+<div class="version">VERSION 4.1 — Final</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -113,16 +113,6 @@ function addSection() {
   };
 }
 
-async function upload(path, content, msg) {
-  const token = await getAppToken();
-  const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}` },
-    body: JSON.stringify({ message: msg, content: content, branch: "main" })
-  });
-  if (!r.ok) throw new Error(await r.text());
-}
-
 async function publishAll() {
   try {
     const title = document.getElementById('page-title').value.trim() || "Untitled";
@@ -159,17 +149,17 @@ async function publishAll() {
       });
     }
 
-    const r = await fetch("https://api.github.com/repos/iowacattails/my-law-notes/dispatches", {
+    const r = await fetch("https://law-notes-publisher.vercel.app/api/publish", {
       method: "POST",
-      headers: { "Accept": "application/vnd.github.v3+json" },
-      body: JSON.stringify({ event_type: "publish-law-note", client_payload: payload })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
+    const result = await r.json();
     if (r.ok) {
-      alert("SUCCESS! Publishing started — refresh main page in 20 seconds.");
+      alert(`SUCCESS! Note is live:\nhttps://iowacattails.github.io/my-law-notes/${slug}`);
     } else {
-      const err = await r.text();
-      alert("Failed: " + err);
+      alert("Failed: " + result.error);
     }
   } catch (e) {
     alert("Error: " + e.message);
