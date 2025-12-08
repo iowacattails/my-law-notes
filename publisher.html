@@ -123,6 +123,60 @@ document.addEventListener('change', previewAll);
 
 addSection();
 previewAll();
+
+async function publishAll() {
+  try {
+    const title = document.getElementById('page-title').value.trim() || "Untitled";
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
+    const sections = [];
+
+    document.querySelectorAll('.section').forEach(sec => {
+      const imageFile = sec.querySelector('.image').files[0];
+      const imageB64 = imageFile ? new Promise(r => {
+        const fr = new FileReader();
+        fr.onload = e => r(e.target.result.split(',')[1]);
+        fr.readAsDataURL(imageFile);
+      }) : null;
+
+      const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent),
+                    ...sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean)];
+      const header = sec.querySelector('.header-box').innerText.trim();
+      const body = sec.querySelector('.content').value;
+      const source = sec.querySelector('.source').value.trim();
+      const citation = sec.querySelector('.citation').value.trim();
+
+      sections.push({ tags, header, body, image: imageB64, source, citation });
+    });
+
+    const payload = { title, slug, sections: [] };
+    for (const s of sections) {
+      payload.sections.push({
+        tags: s.tags,
+        header: s.header,
+        body: s.body,
+        image: s.image ? await s.image : null,
+        source: s.source,
+        citation: s.citation
+      });
+    }
+
+    const r = await fetch("https://law-notes-publisher.vercel.app/api/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await r.json();
+    if (r.ok) {
+      alert(`SUCCESS! Note is live:\nhttps://my-law-notes-v2.vercel.app/${slug}`);
+    } else {
+      alert("Failed: " + (result.error || "Unknown error"));
+    }
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+
 </script>
 </body>
 </html>
