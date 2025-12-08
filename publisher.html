@@ -1,4 +1,4 @@
-<!-- Vercel version 2.0 with 4.1 features -->
+<!-- Vercel version 2.1 with 4.1 features -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,7 +29,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 2.0 — FINAL VERCEL (Dec 6 2025)</div>
+<div class="version">VERSION 2.1 — FINAL VERCEL (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -162,7 +162,7 @@ async function publishAll() {
     if (r.ok) {
       alert(`SUCCESS! Note is live:\nhttps://my-law-notes-v2.vercel.app/${slug}`);
     } else {
-      alert("Failed: " + result.error);
+      alert("Failed: " + (result.error || "Unknown error"));
     }
   } catch (e) {
     alert("Error: " + e.message);
