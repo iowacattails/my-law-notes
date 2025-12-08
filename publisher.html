@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">VERSION 8.0 — FINAL + ALL v4.1 FEATURES (Dec 6 2025)</div>
+<div class="version">VERSION 9.0 — FINAL (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -62,7 +62,7 @@ function addSection() {
     <textarea class="content" placeholder="Write your full note here..."></textarea>
     <label>Add Image (auto-uploaded)</label>
     <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none">
+    <img class="img-prev" style="display:none;max-width:100%">
     <label>Source (link or book)</label>
     <input type="text" class="source">
     <label>Citation (quote/reference)</label>
@@ -70,29 +70,73 @@ function addSection() {
   `;
   document.getElementById('sections').appendChild(d);
 
-  const tagBox = d.querySelector(`#tags${sectionCount}`);
-  tagsList.forEach(tag => {
-    const btn = document.createElement('span');
-    btn.className = 'tag-btn';
-    btn.textContent = tag;
-    btn.onclick = () => { btn.classList.toggle('selected'); previewAll(); };
-    tagBox.appendChild(btn);
+  const tb = document.getElementById(`tags${sectionCount}`);
+  tagsList.forEach(t => {
+    const b = document.createElement('span');
+    b.className = 'tag-btn';
+    b.textContent = t;
+    b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
+    tb.appendChild(b);
   });
 
   d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
-  d.querySelector('.image').onchange = e => {
-    const file = e.target.files[0];
+  d.querySelector('.image').onchange = () => {
+    const file = d.querySelector('.image').files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = ev => {
-        const prev = e.target.parentElement.querySelector('.img-prev');
-        prev.src = ev.target.result;
-        prev.style.display = 'block';
-      };
+      reader.onload = e => d.querySelector('.img-prev').src = e.target.result;
       reader.readAsDataURL(file);
+      d.querySelector('.img-prev').style.display = 'block';
     }
     previewAll();
   };
+}
+
+async function publishAll() {
+  try {
+    const title = document.getElementById('page-title').value.trim() || 'new-note';
+    const fn = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
+    let body = '';
+
+    for (const sec of document.querySelectorAll('.section')) {
+      const file = sec.querySelector('.image').files[0];
+      let img = '';
+      if (file) {
+        const name = prompt('Image filename (with extension)', file.name) || file.name;
+        const fr = new FileReader();
+        const b64 = await new Promise(r => { fr.onload = e => r(e.target.result.split(',')[1]); fr.readAsDataURL(file); });
+        await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/images/${name}`, {
+          method: 'PUT',
+          headers: { Authorization: 'token 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' },
+          body: JSON.stringify({ message: `Add ${name}`, content: b64, branch: "main" })
+        });
+        img = `images/${name}`;
+      }
+      const tags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b=>b.textContent)
+                   .concat(sec.querySelector('.custom-tags').value.split(',').map(t=>t.trim()).filter(Boolean))
+                   .join(' · ');
+      const header = sec.querySelector('.header-box').innerText.trim();
+      const text = sec.querySelector('.content').value.replace(/\n/g,'<br>') + (img?`<br><img src="${img}">`:'');
+      const src = sec.querySelector('.source').value.trim();
+      const cit = sec.querySelector('.citation').value.trim();
+      body += `${tags?`<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`:''}`;
+      if (header) body += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
+      body += `<div class="stripe">${text}</div>${src?`<p style="text-align:center">Source: <a href="${src}">${src}</a></p>`:''}${cit?`<p style="text-align:center;font-style:italic">${cit}</p>`:''}<hr>`;
+    }
+
+    const finalHTML = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>${body}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>`;
+
+    const r = await fetch(`https://api.github.com/repos/iowacattails/my-law-notes/contents/${fn}`, {
+      method: 'PUT',
+      headers: { Authorization: 'token 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' },
+      body: JSON.stringify({ message: `Create note: ${title}`, content: btoa(unescape(encodeURIComponent(finalHTML))), branch: "main" })
+    });
+    if (!r.ok) throw new Error(await r.text());
+
+    alert(`SUCCESS! Note is live:\nhttps://iowacattails.github.io/my-law-notes/${fn}`);
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
 }
 
 function previewAll() {
@@ -123,60 +167,6 @@ document.addEventListener('change', previewAll);
 
 addSection();
 previewAll();
-
-async function publishAll() {
-  try {
-    const title = document.getElementById('page-title').value.trim() || "Untitled";
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-    const sections = [];
-
-    document.querySelectorAll('.section').forEach(sec => {
-      const imageFile = sec.querySelector('.image').files[0];
-      const imageB64 = imageFile ? new Promise(r => {
-        const fr = new FileReader();
-        fr.onload = e => r(e.target.result.split(',')[1]);
-        fr.readAsDataURL(imageFile);
-      }) : null;
-
-      const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent),
-                    ...sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean)];
-      const header = sec.querySelector('.header-box').innerText.trim();
-      const body = sec.querySelector('.content').value;
-      const source = sec.querySelector('.source').value.trim();
-      const citation = sec.querySelector('.citation').value.trim();
-
-      sections.push({ tags, header, body, image: imageB64, source, citation });
-    });
-
-    const payload = { title, slug, sections: [] };
-    for (const s of sections) {
-      payload.sections.push({
-        tags: s.tags,
-        header: s.header,
-        body: s.body,
-        image: s.image ? await s.image : null,
-        source: s.source,
-        citation: s.citation
-      });
-    }
-
-    const r = await fetch("https://law-notes-publisher.vercel.app/api/publish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await r.json();
-    if (r.ok) {
-      alert(`SUCCESS! Note is live:\nhttps://my-law-notes-v2.vercel.app/${slug}`);
-    } else {
-      alert("Failed: " + (result.error || "Unknown error"));
-    }
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
-}
-
 </script>
 </body>
 </html>
