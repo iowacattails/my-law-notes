@@ -17,7 +17,6 @@
   .header-box{width:100%;padding:12px;background:#333;border:3px solid #d4af37;color:#d4af37;border-radius:10px;font-size:18px;text-align:center;margin:20px 0}
   button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
   button:hover{background:gold}
-  .delete-image-btn{background:#c44;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;margin-top:8px;cursor:pointer}
   #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
   .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
   .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
@@ -28,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">FINAL v4.1 — WORKS 100% (Dec 6 2025)</div>
+<div class="version">FINAL v4.1 — BASE64 IMAGES (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -36,12 +35,14 @@
 
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
-  <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
-    Publish All (Images + Note + Index)
+  <button onclick="generateFinalHTML()" style="background:gold;font-size:28px;padding:22px 70px">
+    Generate Final HTML (Copy & Paste)
   </button>
 </div>
 
 <div id="preview"></div>
+
+<textarea id="final-output" readonly style="width:100%;height:500px;margin-top:30px;background:#000;color:#0f0;padding:20px;font-family:monospace;font-size:14px"></textarea>
 
 <div class="back"><a href="index.html">Back to All Law Notes</a></div>
 
@@ -61,10 +62,9 @@ function addSection() {
     <div class="header-box" contenteditable="true">Section Header / Context</div>
     <label>Body of Note</label>
     <textarea class="content" placeholder="Write your full note here..."></textarea>
-    <label>Add Image (auto-uploaded)</label>
+    <label>Add Image</label>
     <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none;max-width:100%">
-    <div class="delete-btn-container"></div>
+    <img class="img-prev" style="display:none;max-width:100%;margin:15px 0">
     <label>Source (link or book)</label>
     <input type="text" class="source">
     <label>Citation (quote/reference)</label>
@@ -72,40 +72,24 @@ function addSection() {
   `;
   document.getElementById('sections').appendChild(d);
 
-  const tb = document.getElementById(`tags${sectionCount}`);
-  tagsList.forEach(t => {
-    const b = document.createElement('span');
-    b.className = 'tag-btn';
-    b.textContent = t;
-    b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
-    tb.appendChild(b);
+  const tagBox = d.querySelector(`#tags${sectionCount}`);
+  tagsList.forEach(tag => {
+    const btn = document.createElement('span');
+    btn.className = 'tag-btn';
+    btn.textContent = tag;
+    btn.onclick = () => { btn.classList.toggle('selected'); previewAll(); };
+    tagBox.appendChild(btn);
   });
 
   const imgInput = d.querySelector('.image');
   const imgPrev = d.querySelector('.img-prev');
-  const delContainer = d.querySelector('.delete-btn-container');
-
   imgInput.onchange = () => {
     const file = imgInput.files[0];
-    delContainer.innerHTML = '';
-    imgPrev.style.display = 'none';
-
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
         imgPrev.src = e.target.result;
         imgPrev.style.display = 'block';
-
-        const delBtn = document.createElement('button');
-        delBtn.textContent = "Remove Image";
-        delBtn.className = "delete-image-btn";
-        delBtn.onclick = () => {
-          imgInput.value = '';
-          imgPrev.style.display = 'none';
-          delBtn.remove();
-          previewAll();
-        };
-        delContainer.appendChild(delBtn);
       };
       reader.readAsDataURL(file);
     }
@@ -113,59 +97,6 @@ function addSection() {
   };
 
   d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
-}
-
-async function publishAll() {
-  try {
-    const title = document.getElementById('page-title').value.trim() || "Untitled";
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-    const sections = [];
-
-    document.querySelectorAll('.section').forEach(sec => {
-      const imageFile = sec.querySelector('.image').files[0];
-      const imageB64 = imageFile ? new Promise(r => {
-        const fr = new FileReader();
-        fr.onload = e => r(e.target.result.split(',')[1]);
-        fr.readAsDataURL(imageFile);
-      }) : null;
-
-      const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent),
-                    ...sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean)];
-      const header = sec.querySelector('.header-box').innerText.trim();
-      const body = sec.querySelector('.content').value;
-      const source = sec.querySelector('.source').value.trim();
-      const citation = sec.querySelector('.citation').value.trim();
-
-      sections.push({ tags, header, body, image: imageB64, source, citation });
-    });
-
-    const payload = { repo: "iowacattails/my-law-notes", title, slug, sections: [] };
-    for (const s of sections) {
-      payload.sections.push({
-        tags: s.tags,
-        header: s.header,
-        body: s.body,
-        image: s.image ? await s.image : null,
-        source: s.source,
-        citation: s.citation
-      });
-    }
-
-    const r = await fetch("https://law-notes-publisher.vercel.app/api/publish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await r.json();
-    if (r.ok) {
-      alert(`SUCCESS! Note is live:\nhttps://iowacattails.github.io/my-law-notes/${slug}`);
-    } else {
-      alert("Failed: " + (result.error || "Unknown error"));
-    }
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
 }
 
 function previewAll() {
@@ -189,6 +120,47 @@ function previewAll() {
     html += '<hr style="border:1px dashed #d4af37">';
   });
   document.getElementById('preview').innerHTML = html;
+}
+
+function generateFinalHTML() {
+  const title = document.getElementById('page-title').value.trim() || "My Law Note";
+  let body = '';
+
+  document.querySelectorAll('.section').forEach(sec => {
+    const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
+    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = [...selected, ...custom].join(' · ');
+    const header = sec.querySelector('.header-box').innerText.trim();
+    const content = sec.querySelector('.content').value.replace(/\n/g,'<br>');
+    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
+    const source = sec.querySelector('.source').value.trim();
+    const citation = sec.querySelector('.citation').value.trim();
+
+    if (tags) body += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
+    if (header) body += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
+    body += `<div class="stripe">${content}${img}</div>`;
+    if (source) body += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
+    if (citation) body += `<p style="text-align:center;font-style:italic">${citation}</p>`;
+    body += '<hr style="border:1px dashed #d4af37">';
+  });
+
+  const finalHTML = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
+<style>
+  body{background:#111;color:#fff;font-family:Georgia,serif;padding:20px}
+  h1{color:#d4af37;text-align:center;text-shadow:0 0 10px gold}
+  a{color:#d4af37}
+  .stripe{background:#fff;padding:30px;border-radius:12px;margin:20px 0}
+  img{max-width:100%;border-radius:12px}
+</style></head>
+<body style="max-width:900px;margin:auto">
+<h1>${title}</h1>
+${body}
+<p style="text-align:center"><a href="index.html">Back to All Law Notes</a></p>
+</body></html>`;
+
+  document.getElementById('final-output').value = finalHTML;
+  alert("HTML ready! Copy from the box below and paste into GitHub/Tiiny Host/anywhere");
 }
 
 document.addEventListener('input', previewAll);
