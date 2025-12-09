@@ -1,45 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Image Uploader</title>
-<style>
-  body{background:#ff0;font-family:Arial;text-align:center;padding:40px;}
-  h1{font-size:3em;}
-  #drop{background:#fff;border:6px dashed #000;padding:60px;margin:40px auto;max-width:600px;cursor:pointer;}
-  button{width:90%;padding:25px;margin:30px auto;font-size:2em;background:#000;color:#ff0;border:none;cursor:pointer;}
-</style>
+  <title>Upload Image to GitHub</title>
+  <meta charset="utf-8">
+  <style>
+    body {font-family:Arial;background:#111;color:#fff;padding:20px}
+    input,button{padding:15px;font-size:18px;margin:10px 0}
+    button{background:#d4af37;color:#000;border:none;border-radius:8px;cursor:pointer}
+  </style>
 </head>
 <body>
-<h1>Drop Photo Here</h1>
-<div id="drop">Drag image or click</div>
-<input type="file" accept="image/*" id="file" style="display:none;">
-<p id="result"></p>
-<button onclick="openPublisher()">OPEN PUBLISHER WITH THIS IMAGE</button>
-<a href="publisher.html" style="font-size:1.5em;color:#000;display:block;margin:40px;">← Back to Publisher</a>
-<script>
-let lastUrl = '';
-document.getElementById('drop').onclick=()=>document.getElementById('file').click();
-document.getElementById('file').onchange=e=>upload(e.target.files[0]);
-document.getElementById('drop').ondragover=e=>e.preventDefault();
-document.getElementById('drop').ondrop=e=>{e.preventDefault();upload(e.dataTransfer.files[0])}
+  <h1 style="color:#d4af37">Upload Image to my-law-notes/images</h1>
+  <input type="file" id="file" accept="image/*"><br>
+  <input type="text" id="name" placeholder="filename.jpg" style="width:100%">
+  <button onclick="upload()">UPLOAD IMAGE</button>
+  <pre id="out"></pre>
 
-function upload(file){
-  if(!file||!file.type.startsWith('image/'))return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const name=prompt("Image name (e.g. vicinage.jpg)",file.name)||file.name;
-    const url=`https://github.com/iowacattails/my-law-notes/upload/images-experiment/images?filename=${name}`;
-    window.open(url,'_blank');
-    lastUrl=`images/${name}`;
-    document.getElementById('result').innerHTML=`<br>Image opened — commit it!<br>URL: ${lastUrl}`;
+<script>
+async function upload() {
+  const file = document.getElementById('file').files[0];
+  const name = document.getElementById('name').value || file.name;
+  if (!file) return alert("Pick a file");
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result.split(',')[1];
+    const r = await fetch("https://api.github.com/repos/iowacattails/my-law-notes/contents/images/" + name, {
+      method: "PUT",
+      headers: { 
+        "Authorization": "token github_pat_11AAL7ESA0YOUR_TOKEN_HERE", 
+        "Accept": "application/vnd.github.v3+json"
+      },
+      body: JSON.stringify({
+        message: "Upload image " + name,
+        content: b64,
+        branch: "main"
+      })
+    });
+    const json = await r.json();
+    if (r.ok) {
+      document.getElementById('out').textContent = "SUCCESS!\nImage URL:\nhttps://iowacattails.github.io/my-law-notes/images/" + name;
+    } else {
+      document.getElementById('out').textContent = "ERROR:\n" + JSON.stringify(json, null, 2);
+    }
   };
   reader.readAsDataURL(file);
-}
-
-function openPublisher(){
-  if(lastUrl) window.open(`publisher.html?img=${encodeURIComponent(lastUrl)}`,'_blank');
-  else alert("Upload an image first!");
 }
 </script>
 </body>
