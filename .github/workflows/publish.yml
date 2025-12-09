@@ -12,71 +12,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish
+      - name: Publish note and update index
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           python3 - <<'PY'
-          import os, json, base64, requests, re, random, string
+          import os, json, base64, requests, re
 
-          payload = json.load(open(os.environ['GITHUB_EVENT_PATH']))['client_payload']
+          payload = json.loads(os.environ['GITHUB_EVENT_PATH'])['client_payload']
           title = payload['title']
           slug = payload['slug']
-          sections = payload['sections']
+          html_b64 = payload['html']
 
-          html = ''
-          for sec in sections:
-            tags = ' · '.join(sec.get('tags', [])) if sec.get('tags') else ''
-            header = sec.get('header', '')
-            body = sec.get('body', '').replace('\n', '<br>')
-            img = ''
-            if sec.get('image'):
-              b64 = sec['image']
-              name = f"img-{''.join(random.choices(string.ascii_lowercase + string.digits, k=8))}.jpg"
-              requests.put(
-                f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/images/{name}",
-                headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"},
-                json={'message': f'Add {name}', 'content': b64, 'branch': 'main'}
-              )
-              img = f'<br><img src="images/{name}">'
-            source = sec.get('source', '')
-            citation = sec.get('citation', '')
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GITHUB_TOKEN']
+          headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
 
-            if tags: html += f'<p style="text-align:center;color:#b8860b"><strong>{tags}</strong></p>'
-            if header: html += f'<h2 style="text-align:center;color:#d4af37">{header}</h2>'
-            html += f'<div class="stripe">{body}{img}</div>'
-            if source: html += f'<p style="text-align:center">Source: <a href="{source}">{source}</a></p>'
-            if citation: html += f'<p style="text-align:center;font-style:italic">{citation}</p>'
-            html += '<hr>'
-
-          note_html = f'''<!DOCTYPE html>
-          <html><head><meta charset="UTF-8"><title>{title}</title>
-          <style>body{{background:#111;color:#fff;font-family:Arial;padding:20px}}.note{{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:20px;border:6px solid #d4af37}}h1{{color:#b8860b;text-align:center;text-shadow:0 0 12px gold}}.stripe{{background:#fff;padding:30px;border-radius:12px;margin:20px 0}}a{{color:#d4af37}}img{{max-width:100%}}</style>
-          </head><body><div class="note"><h1>{title}</h1>{html}<p style="text-align:center"><a href="index.html">All Law Notes</a></p></div></body></html>'''
-
-          # Create the note
+          # 1. Save the new note
           requests.put(
-            f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/{slug}",
-            headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"},
-            json={'message': f'Publish: {title}', 'content': base64.b64encode(note_html.encode()).decode(), 'branch': 'main'}
+            f"https://api.github.com/repos/{repo}/contents/{slug}",
+            headers=headers,
+            json={"message": f"Publish: {title}", "content": html_b64, "branch": "main"}
           )
 
-          # Update index.html
-          idx = requests.get(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/index.html",
-                             headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"}).json()
-          content = base64.b64decode(idx['content']).decode()
+          # 2. Get current index.html
+          idx_resp = requests.get(f"https://api.github.com/repos/{repo}/contents/index.html", headers=headers)
+          idx_data = idx_resp.json()
+          content = base64.b64decode(idx_data['content']).decode('utf-8')
+
+          # 3. Add new note to the JS array if not already there
           if slug not in content:
-            notes = []
-            m = re.search(r'const notes = (\[[\s\S]*?\]);', content)
-            if m: notes = json.loads(m.group(1))
-            notes.append({"title": title, "file": slug})
-            notes.sort(key=lambda x: x["title"].lower())
-            new_notes = f'const notes = {json.dumps(notes, indent=2)};'
-            content = re.sub(r'const notes = \[[\s\S]*?\];', new_notes, content)
-            requests.put(
-              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/index.html",
-              headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"},
-              json={'message': f'Index: add {title}', 'content': base64.b64encode(content.encode()).decode(), 'sha': idx['sha'], 'branch': 'main'}
-            )
-          print("Published + index updated")
+            match = re.search(r'const notes = (\[[^;]*\]);', content)
+            if match:
+              notes = json.loads(match.group(1))
+              notes.append({"title": title, "file": slug})
+              notes.sort(key=lambda x: x["title"].lower())
+              new_notes_js = f"const notes = {json.dumps(notes, indent=2)};"
+              content = content.replace(match.group(0), new_notes_js)
+
+              # 4. Save updated index.html
+              requests.put(
+                f"https://api.github.com/repos/{repo}/contents/index.html",
+                headers=headers,
+                json={
+                  "message": f"Index: add {title}",
+                  "content": base64.b64encode(content.encode()).decode(),
+                  "sha": idx_data['sha'],
+                  "branch": "main"
+                }
+              )
           PY
