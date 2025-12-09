@@ -129,9 +129,8 @@ async function publishAll() {
     const r = await fetch("https://api.github.com/repos/iowacattails/my-law-notes/dispatches", {
       method: "POST",
       headers: {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": "token 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"  // ← this will be ignored — real token is in secret
-      },
+  "Accept": "application/vnd.github.v3+json"
+},
       body: JSON.stringify({
         event_type: "publish-law-note",
         client_payload: { title, slug, html: btoa(unescape(encodeURIComponent(finalHTML))) }
