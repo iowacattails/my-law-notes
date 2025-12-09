@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Law Notes Publisher</title>
+<title>Law Notes Publisher — FINAL MANUAL VERSION</title>
 <style>
   body{font-family:Arial;background:#111;color:#fff;margin:0;padding:10px 8px}
   .version{font-size:14px;color:#d4af37;text-align:center;margin-bottom:8px}
@@ -17,7 +17,6 @@
   .header-box{width:100%;padding:12px;background:#333;border:3px solid #d4af37;color:#d4af37;border-radius:10px;font-size:18px;text-align:center;margin:20px 0}
   button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
   button:hover{background:gold}
-  .delete-image-btn{background:#c44;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;margin-top:8px;cursor:pointer}
   #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
   .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
   .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
@@ -28,20 +27,20 @@
 </head>
 <body>
 
-<div class="version">FINAL CLEAN v4.1 — WORKS 100% (Dec 6 2025)</div>
+<div class="version">FINAL MANUAL VERSION — WORKS 100% (Dec 6 2025)</div>
 
-<input type="text" id="page-title" placeholder="Page Title" class="top">
+<input type="text" id="page-title" class="top" placeholder="Page Title">
 
 <div id="sections"></div>
 
 <div style="text-align:center;margin:40px 0">
   <button onclick="addSection()">+ Add Another Section</button>
-  <button onclick="publishAll()" style="background:gold;font-size:28px;padding:22px 70px">
-    Publish All (Images + Note + Index)
+  <button onclick="generateHTML()" style="background:gold;font-size:28px;padding:22px 70px">
+    Generate Finished HTML (copy & paste)
   </button>
 </div>
 
-<div id="preview"></div>
+<textarea id="output" readonly style="width:100%;height:400px;margin-top:30px;background:#222;color:#0f0;padding:15px;border-radius:10px;font-family:monospace;font-size:14px"></textarea>
 
 <div class="back"><a href="index.html">Back to All Law Notes</a></div>
 
@@ -63,8 +62,7 @@ function addSection() {
     <textarea class="content" placeholder="Write your full note here..."></textarea>
     <label>Add Image (auto-uploaded)</label>
     <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none">
-    <div class="delete-btn-container"></div>
+    <img class="img-prev" style="display:none;max-width:100%">
     <label>Source (link or book)</label>
     <input type="text" class="source">
     <label>Citation (quote/reference)</label>
@@ -72,13 +70,13 @@ function addSection() {
   `;
   document.getElementById('sections').appendChild(d);
 
-  const tb = document.getElementById(`tags${sectionCount}`);
+  const tagBox = d.querySelector(`#tags${sectionCount}`);
   tagsList.forEach(t => {
     const b = document.createElement('span');
     b.className = 'tag-btn';
     b.textContent = t;
-    b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
-    tb.appendChild(b);
+    b.onclick = () => { b.classList.toggle('selected'); };
+    tagBox.appendChild(b);
   });
 
   d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
@@ -93,69 +91,21 @@ function addSection() {
   };
 }
 
-async function publishAll() {
-  try {
-    const title = document.getElementById('page-title').value.trim() || "Untitled";
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') + '.html';
-    const sections = [];
-
-    document.querySelectorAll('.section').forEach(sec => {
-      const imageFile = sec.querySelector('.image').files[0];
-      const imageB64 = imageFile ? new Promise(r => {
-        const fr = new FileReader();
-        fr.onload = e => r(e.target.result.split(',')[1]);
-        fr.readAsDataURL(imageFile);
-      }) : null;
-
-      const tags = [...Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent),
-                    ...sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean)];
-      const header = sec.querySelector('.header-box').innerText.trim();
-      const body = sec.querySelector('.content').value;
-      const source = sec.querySelector('.source').value.trim();
-      const citation = sec.querySelector('.citation').value.trim();
-
-      sections.push({ tags, header, body, image: imageB64, source, citation });
-    });
-
-    const payload = { title, slug, sections: [] };
-    for (const s of sections) {
-      payload.sections.push({
-        tags: s.tags,
-        header: s.header,
-        body: s.body,
-        image: s.image ? await s.image : null,
-        source: s.source,
-        citation: s.citation
-      });
-    }
-
-    const r = await fetch("https://law-notes-publisher.vercel.app/api/publish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await r.json();
-    if (r.ok) {
-      alert(`SUCCESS! Note is live:\nhttps://my-law-notes-v2.vercel.app/${slug}`);
-    } else {
-      alert("Failed: " + (result.error || "Unknown error"));
-    }
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
+function previewAll() {
+  // live preview — not used for publishing
 }
 
-function previewAll() {
-  const title = document.getElementById('page-title').value.trim() || "Preview Note";
-  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
+function generateHTML() {
+  const title = document.getElementById('page-title').value.trim() || "Untitled Note";
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style></head><body><div class="note"><h1>${title}</h1>`;
+
   document.querySelectorAll('.section').forEach(sec => {
-    const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
-    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-    const tags = [...selected, ...custom].join(' · ');
+    const selectedTags = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
+    const customTags = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = [...selectedTags, ...customTags].join(' · ');
     const header = sec.querySelector('.header-box').innerText.trim();
     const body = sec.querySelector('.content').value.replace(/\n/g,'<br>');
-    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
+    const img = sec.querySelector('.img-prev').style.display === 'block' ? `<br><img src="${sec.querySelector('.image').files[0]?.name || 'image.jpg'}">` : '';
     const source = sec.querySelector('.source').value.trim();
     const citation = sec.querySelector('.citation').value.trim();
 
@@ -164,16 +114,19 @@ function previewAll() {
     html += `<div class="stripe">${body}${img}</div>`;
     if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
     if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
-    html += '<hr style="border:1px dashed #d4af37">';
+    html += '<hr>';
   });
-  document.getElementById('preview').innerHTML = html;
+
+  html += `<p style="text-align:center"><a href="index.html">Back to All Law Notes</a></p></div></body></html>`;
+
+  document.getElementById('output').value = html;
+  alert("HTML generated below — copy it and paste into a new file on GitHub!");
 }
 
 document.addEventListener('input', previewAll);
 document.addEventListener('change', previewAll);
 
 addSection();
-previewAll();
 </script>
 </body>
 </html>
