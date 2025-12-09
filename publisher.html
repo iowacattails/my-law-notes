@@ -17,6 +17,7 @@
   .header-box{width:100%;padding:12px;background:#333;border:3px solid #d4af37;color:#d4af37;border-radius:10px;font-size:18px;text-align:center;margin:20px 0}
   button{background:#d4af37;color:#000;font-weight:bold;padding:18px 36px;border:none;border-radius:12px;cursor:pointer;font-size:22px;margin:15px 6px}
   button:hover{background:gold}
+  .delete-image-btn{background:#c44;color:#fff;padding:8px 16px;border-radius:8px;font-size:14px;margin-top:8px;cursor:pointer}
   #preview{margin:30px -8px 0;padding:35px;background:#ffffe0;color:#000;border:4px solid #d4af37;border-radius:15px;display:block;font-size:18px;line-height:1.6}
   .stripe{background:repeating-linear-gradient(90deg,transparent,transparent 49px,#d4af37 49px,#d4af37 50px);padding:30px;border-radius:12px;margin:20px 0}
   .section{margin-top:50px;padding-top:30px;border-top:3px dashed #d4af37}
@@ -27,9 +28,9 @@
 </head>
 <body>
 
-<div class="version">VERSION 9.0 — FINAL (Dec 6 2025)</div>
+<div class="version">FINAL CLEAN v4.1 — WORKS 100% (Dec 6 2025)</div>
 
-<input type="text" id="page-title" class="top" placeholder="Page Title">
+<input type="text" id="page-title" placeholder="Page Title" class="top">
 
 <div id="sections"></div>
 
@@ -45,7 +46,6 @@
 <div class="back"><a href="index.html">Back to All Law Notes</a></div>
 
 <script>
-  const TOKEN = "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"; const REPO = "iowacattails/my-law-notes";
 let sectionCount = 0;
 const tagsList = ["Common Law","Trial by Jury","Natural Rights","Due Process","Magna Carta","Abrogation","Vattel","Locke"];
 
@@ -63,7 +63,8 @@ function addSection() {
     <textarea class="content" placeholder="Write your full note here..."></textarea>
     <label>Add Image (auto-uploaded)</label>
     <input type="file" class="image" accept="image/*">
-    <img class="img-prev" style="display:none;max-width:100%">
+    <img class="img-prev" style="display:none">
+    <div class="delete-btn-container"></div>
     <label>Source (link or book)</label>
     <input type="text" class="source">
     <label>Citation (quote/reference)</label>
@@ -87,7 +88,6 @@ function addSection() {
       const reader = new FileReader();
       reader.onload = e => d.querySelector('.img-prev').src = e.target.result;
       reader.readAsDataURL(file);
-      d.querySelector('.img-prev').style.display = 'block';
     }
     previewAll();
   };
@@ -117,7 +117,7 @@ async function publishAll() {
       sections.push({ tags, header, body, image: imageB64, source, citation });
     });
 
-    const payload = { repo: "iowacattails/my-law-notes", title, slug, sections: [] };
+    const payload = { title, slug, sections: [] };
     for (const s of sections) {
       payload.sections.push({
         tags: s.tags,
