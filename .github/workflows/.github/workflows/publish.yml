@@ -1,0 +1,50 @@
+name: Publish Law Note
+on:
+  repository_dispatch:
+    types: [publish-note]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish note
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import os, json, base64, re, textwrap
+          payload = json.loads(os.environ['GITHUB_EVENT_PATH'])['client_payload']
+          title = payload['title']
+          slug = payload['slug']
+          html = payload['html']
+
+          # Save the note
+          r = requests.put(
+            f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/{slug}",
+            headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"},
+            json={'message': f'Publish: {title}', 'content': html, 'branch': 'main'}
+          )
+          print("Note saved")
+
+          # Update index.html
+          idx = requests.get(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/index.html",
+                            headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"}).json()
+          content = base64.b64decode(idx['content']).decode()
+          if slug not in content:
+            notes = re.search(r'const notes = (\[[\s\S]*?\]);', content)
+            note_list = json.loads(notes.group(1)) if notes else []
+            note_list.append({"title": title, "file": slug})
+            note_list.sort(key=lambda x: x["title"].lower())
+            new_js = f'const notes = {json.dumps(note_list, indent=2)};'
+            content = re.sub(r'const notes = \[[\s\S]*?\];', new_js, content)
+            requests.put(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/contents/index.html",
+              headers={'Authorization': f"token {os.environ['GITHUB_TOKEN']}"},
+              json={'message': f'Index: add {title}', 'content': base64.b64encode(content.encode()).decode(), 'sha': idx['sha'], 'branch': 'main'}
+            )
+          PY
