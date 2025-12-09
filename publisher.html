@@ -133,7 +133,7 @@ async function publishAll() {
         "Authorization": "token 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"  // ← this will be ignored — real token is in secret
       },
       body: JSON.stringify({
-        event_type: "publish-note",
+        event_type: "publish-law-note",
         client_payload: { title, slug, html: btoa(unescape(encodeURIComponent(finalHTML))) }
       })
     });
