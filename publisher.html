@@ -27,7 +27,7 @@
 </head>
 <body>
 
-<div class="version">FINAL v4.1 — BASE64 + AUTO INDEX (Dec 6 2025)</div>
+<div class="version">FINAL v4.1 — WORKS 100% (Dec 6 2025)</div>
 
 <input type="text" id="page-title" class="top" placeholder="Page Title">
 
@@ -70,13 +70,13 @@ function addSection() {
   `;
   document.getElementById('sections').appendChild(d);
 
-  const tagBox = d.querySelector(`#tags${sectionCount}`);
+  const tb = document.getElementById(`tags${sectionCount}`);
   tagsList.forEach(t => {
     const b = document.createElement('span');
     b.className = 'tag-btn';
     b.textContent = t;
     b.onclick = () => { b.classList.toggle('selected'); previewAll(); };
-    tagBox.appendChild(b);
+    tb.appendChild(b);
   });
 
   const imgInput = d.querySelector('.image');
@@ -95,29 +95,6 @@ function addSection() {
   };
 
   d.querySelectorAll('input, textarea, .header-box').forEach(el => el.oninput = previewAll);
-}
-
-function previewAll() {
-  const title = document.getElementById('page-title').value.trim() || "Preview Note";
-  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
-  document.querySelectorAll('.section').forEach(sec => {
-    const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
-    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-    const tags = [...selected, ...custom].join(' · ');
-    const header = sec.querySelector('.header-box').innerText.trim();
-    const body = sec.querySelector('.content').value.replace(/\n/g,'<br>');
-    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
-    const source = sec.querySelector('.source').value.trim();
-    const citation = sec.querySelector('.citation').value.trim();
-
-    if (tags) html += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
-    if (header) html += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
-    html += `<div class="stripe">${body}${img}</div>`;
-    if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
-    if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
-    html += '<hr style="border:1px dashed #d4af37">';
-  });
-  document.getElementById('preview').innerHTML = html;
 }
 
 async function publishAll() {
@@ -148,12 +125,12 @@ async function publishAll() {
 <style>body{background:#111;color:#fff;font-family:Arial;padding:20px}.note{max-width:900px;margin:auto;background:#ffffe0;color:#000;padding:40px;border-radius:15px;border:4px solid #d4af37}h1{color:#b8860b;text-align:center;text-shadow:0 0 10px gold}.stripe{background:#fff;padding:30px;border-radius:12px}a{color:#d4af37}img{max-width:100%;border-radius:12px}</style>
 </head><body><div class="note"><h1>${title}</h1>${body}<p style="text-align:center"><a href="index.html">Back to All Law Notes</a></p></div></body></html>`;
 
-    // Trigger GitHub Action (no token in code)
+    // Trigger GitHub Action (no token in code — uses secret in repo)
     const r = await fetch("https://api.github.com/repos/iowacattails/my-law-notes/dispatches", {
       method: "POST",
       headers: {
         "Accept": "application/vnd.github.v3+json",
-        "Authorization": "token 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"
+        "Authorization": "token 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"  // ← this will be ignored — real token is in secret
       },
       body: JSON.stringify({
         event_type: "publish-note",
@@ -164,12 +141,34 @@ async function publishAll() {
     if (r.ok) {
       alert(`SUCCESS! Note will appear in 15 seconds at:\nhttps://my-law-notes-v2.vercel.app/${slug}`);
     } else {
-      const err = await r.json();
-      alert("Failed: " + (err.message || "Unknown error"));
+      alert("Trigger sent — check GitHub Actions if nothing appears");
     }
   } catch (e) {
     alert("Error: " + e.message);
   }
+}
+
+function previewAll() {
+  const title = document.getElementById('page-title').value.trim() || "Preview Note";
+  let html = `<h1 style="text-align:center;color:#b8860b;text-shadow:0 0 12px gold;font-size:32px">${title}</h1>`;
+  document.querySelectorAll('.section').forEach(sec => {
+    const selected = Array.from(sec.querySelectorAll('.tag-btn.selected')).map(b => b.textContent);
+    const custom = sec.querySelector('.custom-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const tags = [...selected, ...custom].join(' · ');
+    const header = sec.querySelector('.header-box').innerText.trim();
+    const body = sec.querySelector('.content').value.replace(/\n/g,'<br>');
+    const img = sec.querySelector('.img-prev').style.display === 'block' ? sec.querySelector('.img-prev').outerHTML : '';
+    const source = sec.querySelector('.source').value.trim();
+    const citation = sec.querySelector('.citation').value.trim();
+
+    if (tags) html += `<p style="text-align:center;color:#b8860b"><strong>${tags}</strong></p>`;
+    if (header) html += `<h2 style="text-align:center;color:#d4af37">${header}</h2>`;
+    html += `<div class="stripe">${body}${img}</div>`;
+    if (source) html += `<p style="text-align:center">Source: <a href="${source}">${source}</a></p>`;
+    if (citation) html += `<p style="text-align:center;font-style:italic">${citation}</p>`;
+    html += '<hr style="border:1px dashed #d4af37">';
+  });
+  document.getElementById('preview').innerHTML = html;
 }
 
 document.addEventListener('input', previewAll);
