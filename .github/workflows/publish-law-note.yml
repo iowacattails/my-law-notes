@@ -11,13 +11,63 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish note
+
+      - name: Publish note and update index
         env:
-          GITHUB_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
-          python3 -c "
+          python3 - <<'PY'
           import os, json, base64, requests, re
-          payload = json.loads(os.environ['GITHUB_EVENT_PATH'])['client_payload']
-          # ... (same Python code as before, using GITHUB_TOKEN)
-          # I'll give you the full script if you say "yes"
-          "
+
+          # Get payload
+          with open(os.environ['GITHUB_EVENT_PATH']) as f:
+            event = json.load(f)
+          payload = event['client_payload']
+          title = payload['title']
+          slug = payload['slug']
+          html_b64 = payload['html']
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GITHUB_TOKEN']
+          headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
+
+          # 1. Save the new note
+          requests.put(
+            f"https://api.github.com/repos/{repo}/contents/{slug}",
+            headers=headers,
+            json={"message": f"Publish: {title}", "content": html_b64, "branch": "main"}
+          )
+
+          # 2. Get current index.html
+          idx_resp = requests.get(f"https://api.github.com/repos/{repo}/contents/index.html", headers=headers)
+          if idx_resp.status_code != 200:
+            print(f"Error getting index.html: {idx_resp.status_code}")
+            exit(1)
+          idx_data = idx_resp.json()
+          content = base64.b64decode(idx_data['content']).decode('utf-8')
+
+          # 3. Add new note to the JS array if not already there
+          if slug not in content:
+            match = re.search(r'const notes = (\[[\s\S]*?\]);', content)
+            if match:
+              notes = json.loads(match.group(1))
+              notes.append({"title": title, "file": slug})
+              notes.sort(key=lambda x: x["title"].lower())
+              new_js = f"const notes = {json.dumps(notes, indent=2)};"
+              content = re.sub(r'const notes = \[[\s\S]*?\];', new_js, content)
+              requests.put(
+                f"https://api.github.com/repos/{repo}/contents/index.html",
+                headers=headers,
+                json={
+                  "message": f"Index: add {title}",
+                  "content": base64.b64encode(content.encode()).decode(),
+                  "sha": idx_data['sha'],
+                  "branch": "main"
+                }
+              )
+              print(f"Index updated with {title}")
+            else:
+              print("No 'const notes' found in index.html")
+          else:
+            print(f"Note {title} already in index")
+          PY
