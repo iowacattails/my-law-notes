@@ -17,7 +17,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
           python3 - <<'PY'
-          import os, json, base64, requests, re
+          import os, json, base64, requests
 
           # Get payload
           with open(os.environ['GITHUB_EVENT_PATH']) as f:
@@ -37,8 +37,9 @@ jobs:
             headers=headers,
             json={"message": f"Publish: {title}", "content": html_b64, "branch": "main"}
           )
+          print(f"Saved {slug}")
 
-          # 2. Get current index.html
+          # 2. Update index.html (add new button manually)
           idx_resp = requests.get(f"https://api.github.com/repos/{repo}/contents/index.html", headers=headers)
           if idx_resp.status_code != 200:
             print(f"Error getting index.html: {idx_resp.status_code}")
@@ -46,28 +47,21 @@ jobs:
           idx_data = idx_resp.json()
           content = base64.b64decode(idx_data['content']).decode('utf-8')
 
-          # 3. Add new note to the JS array if not already there
-          if slug not in content:
-            match = re.search(r'const notes = (\[[\s\S]*?\]);', content)
-            if match:
-              notes = json.loads(match.group(1))
-              notes.append({"title": title, "file": slug})
-              notes.sort(key=lambda x: x["title"].lower())
-              new_js = f"const notes = {json.dumps(notes, indent=2)};"
-              content = re.sub(r'const notes = \[[\s\S]*?\];', new_js, content)
-              requests.put(
-                f"https://api.github.com/repos/{repo}/contents/index.html",
-                headers=headers,
-                json={
-                  "message": f"Index: add {title}",
-                  "content": base64.b64encode(content.encode()).decode(),
-                  "sha": idx_data['sha'],
-                  "branch": "main"
-                }
-              )
-              print(f"Index updated with {title}")
-            else:
-              print("No 'const notes' found in index.html")
+          # Add new button before the + Create New Note
+          new_button = f'<a href="{slug}" class="note-btn">{title}</a>'
+          if new_button not in content:
+            content = content.replace('<a href="publisher.html" class="note-btn" style="background:gold">+ Create New Note (private tool).</a>', new_button + '\n<a href="publisher.html" class="note-btn" style="background:gold">+ Create New Note (private tool).</a>')
+            requests.put(
+              f"https://api.github.com/repos/{repo}/contents/index.html",
+              headers=headers,
+              json={
+                "message": f"Index: add {title}",
+                "content": base64.b64encode(content.encode()).decode(),
+                "sha": idx_data['sha'],
+                "branch": "main"
+              }
+            )
+            print(f"Index updated with {title}")
           else:
             print(f"Note {title} already in index")
           PY
