@@ -1,50 +1,28 @@
 name: Auto-Publish Law Note
 
 on:
-  repository_dispatch:
-    types: [publish-note]
+  push:
+    paths:
+      - 'notes/**.md'
+      - 'images/**'
 
 jobs:
-  publish:
+  update-index:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MY_LAW_NOTES_PAT }}
 
-      - name: Create note page
+      - name: Update index.html
         run: |
-          cat > "${{ github.event.client_payload.slug }}" << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>${{ github.event.client_payload.title }}</title>
-            <style>
-              body{background:#ff0;margin:40px;font-family:Georgia;font-size:2.2em;line-height:2.1;}
-              img{max-width:50%;margin:60px auto;display:block;border:4px solid #000;}
-            </style>
-          </head>
-          <body>
-            <h1>${{ github.event.client_payload.title }}</h1>
-            <p>${{ github.event.client_payload.content }}</p>
-            ${{ github.event.client_payload.image ? '<div style="text-align:center"><img src="' + github.event.client_payload.image + '"></div>' : '' }}
-            <em>Tags: ${{ github.event.client_payload.tags }}</em><br><br>
-            <a href="index.html" style="background:#fff;color:#000;padding:30px;display:block;border:4px solid #000;">← Return to Law Book Links</a>
-          </body>
-          </html>
-          EOF
+          python3 .github/scripts/update_index.py
 
-      - name: Update index.html (add new button)
+      - name: Commit & push index if changed
         run: |
-          sed -i '/<!-- AUTO-GENERATED NOTES -->/a <a href="${{ github.event.client_payload.slug }}" class="button">${{ github.event.client_payload.title }}</a><br><br>' index.html
-
-      - name: Commit and push
-        run: |
-          git config user.name "Law Note Bot"
-          git config user.email "bot@law-notes"
-          git add .
-          git commit -m "Auto-publish: ${{ github.event.client_payload.title }}"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add index.html
+          git diff --quiet && echo "No changes" && exit 0
+          git commit -m "Auto-update index with new note"
           git push
