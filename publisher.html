@@ -91,7 +91,7 @@ function commitImages(){
       count++;
       const defaultName=`${slug}-${count}.jpg`;
       const name=prompt(`Image ${count} filename (you can edit)`, defaultName);
-      if(name) window.open(`https://github.com/iowacattails/my-law-notes/upload/main/images?filename=${name || defaultName}`,'_blank');
+      if(name) window.open(`https://github.com/iowacattails/my-law-notes/new/main/images?filename=${name || defaultName}&description=Uploaded%20via%20Law%20Note%20Publisher`,'_blank');
     }
   });
   if(count===0) alert("No images to commit");
