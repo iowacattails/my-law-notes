@@ -1,0 +1,15 @@
+collections:
+  - label: "Law Notes"
+    name: "notes"
+    folder: "notes"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Content", name: "body", widget: "markdown", buttons: ["bold", "italic", "heading-one", "heading-two", "quote", "bulleted-list", "numbered-list", "link"] }
+      - { label: "Images", name: "images", widget: "list", field: { label: "Image", name: "image", widget: "image" } }
+      - { label: "Tags", name: "tags", widget: "select", multiple: true, options: ["Common Law", "Trial by Jury", "Vicinage"] }
+      - { label: "Custom Tag", name: "custom_tag", widget: "string", required: false }
+      - { label: "Citation", name: "citation", widget: "text" }
+      - { label: "Source URL", name: "source", widget: "string" }
