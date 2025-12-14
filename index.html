@@ -1,32 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>My Law Notes</title>
-<style>
-  body {background:#ff0; margin:40px; font-family:Arial; text-align:center;}
-  h1 {font-size:4em; margin-bottom:20px;}
-  h2 {font-size:2.2em; margin-bottom:80px;}
-  .button {display:inline-block; background:#fff; color:#000; padding:25px 50px; margin:20px; font-size:2em; border:4px solid #000; border-radius:15px; text-decoration:none; font-weight:bold;}
-  .tags-btn {display:inline-block; background:#000; color:#ff0; padding:30px 80px; margin:40px; font-size:3em; border:6px solid #fff; border-radius:25px; text-decoration:none; font-weight:bold;}
-</style>
-</head>
-<body>
+---
+layout: default
+title: My Law Notes
+---
 
-<h1>My Law Notes</h1>
-<h2>Notes & Historical Law Book Links<br><small>by Rob Logue</small></h2>
+<h1 style="text-align:center;">My Law Notes</h1>
 
-<a href="tags.html" class="tags-btn">TAGS</a>
-<br><br><br>
+{% assign sorted_notes = site.notes | sort: 'date' | reverse %}
+{% for note in sorted_notes %}
+  <a href="{{ note.url }}" class="note-link">
+    {{ note.title }}
+    <br>
+    <small>{{ note.date | date: "%B %d, %Y" }}</small>
+  </a>
+  {% if note.tags %}
+    <div style="text-align:center;">
+      {% for tag in note.tags %}
+        <span class="tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endfor %}
 
-<!-- Add new notes here as buttons — one line per note -->
-<a href="test.html" class="button">Test</a><br><br>
-<a href="vicinage.html" class="button">Vicinage</a><br><br>
-<a href="common-law.html" class="button">Common Law</a><br><br>
-<!-- Add more like this: <a href="patrick-henry.html" class="button">Patrick Henry</a><br><br> -->
-
-<br><br><br>
-<a href="publisher.html" style="font-size:2em;color:#000;text-decoration:none;">+ Create New Note</a>
-
-</body>
-</html>
+{% if site.notes.size == 0 %}
+  <p style="text-align:center; font-size:1.2em;">No notes yet — create your first one in Pages CMS!</p>
+{% endif %}
