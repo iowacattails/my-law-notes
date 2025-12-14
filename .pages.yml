@@ -1,15 +1,60 @@
-collections:
-  - label: "Law Notes"
-    name: "notes"
-    folder: "notes"
-    create: true
-    slug: "{{slug}}"
+# Pages CMS configuration for My Law Notes
+# This enables a clean, user-friendly interface for managing notes
+
+media: media
+# ↑ Creates a 'media' folder for uploading images, PDFs, etc. (drag-and-drop support)
+
+content:
+  - name: notes
+    label: Law Notes
+    type: collection
+    path: content/notes
+    # ↑ Your note files will be saved as Markdown in /content/notes/ (e.g., contract-law.md)
+    # Create the 'content/notes' folder if it doesn't exist yet — Pages CMS can do it automatically on first save
+
+    filename_template: "{{slug}}"
+    # ↑ Auto-generates clean filenames from the title (e.g., "Contract Law" → contract-law.md)
+
     fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Content", name: "body", widget: "markdown", buttons: ["bold", "italic", "heading-one", "heading-two", "quote", "bulleted-list", "numbered-list", "link"] }
-      - { label: "Images", name: "images", widget: "list", field: { label: "Image", name: "image", widget: "image" } }
-      - { label: "Tags", name: "tags", widget: "select", multiple: true, options: ["Common Law", "Trial by Jury", "Vicinage"] }
-      - { label: "Custom Tag", name: "custom_tag", widget: "string", required: false }
-      - { label: "Citation", name: "citation", widget: "text" }
-      - { label: "Source URL", name: "source", widget: "string" }
+      - name: title
+        label: Title
+        type: string
+        required: true
+
+      - name: date
+        label: Date
+        type: date
+        default: today
+        # ↑ Automatically sets today's date for new notes
+
+      - name: category
+        label: Category
+        type: string
+        options:
+          - Contracts
+          - Torts
+          - Criminal Law
+          - Property
+          - Constitutional
+          - Evidence
+          - Civil Procedure
+          - Other
+        # ↑ Dropdown menu — add/remove categories as needed
+
+      - name: tags
+        label: Tags
+        type: string
+        list: true
+        # ↑ Allows multiple tags (e.g., "offer", "acceptance", "consideration")
+
+      - name: body
+        label: Note Content
+        type: rich-text
+        required: true
+        # ↑ Full WYSIWYG editor: bold, italics, lists, links, headings, code blocks, etc.
+
+      - name: draft
+        label: Draft (hide from public site)
+        type: boolean
+        default: false
+        # ↑ Optional: check to keep a note private/unpublished
