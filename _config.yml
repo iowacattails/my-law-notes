@@ -1,0 +1,13 @@
+title: My Law Notes
+description: Common law research and notes
+plugins:
+  - jekyll-feed
+
+collections:
+  notes:
+    output: true
+    permalink: /:title.html
+
+exclude:
+  - publisher.html
+  - README.md
