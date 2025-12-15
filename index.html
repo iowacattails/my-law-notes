@@ -11,26 +11,27 @@
       font-family: Georgia, 'Times New Roman', serif;
       text-align: center;
       margin: 0;
-      padding: 60px 20px;
+      padding: 50px 20px 80px;
     }
     h1 {
       font-size: 2.8em;
       margin: 0 0 10px 0;
+      line-height: 1.2;
     }
     h2 {
-      font-size: 1.8em;
-      margin: 0 0 60px 0;
+      font-size: 1.6em;
+      margin: 0 0 70px 0;
       font-weight: normal;
     }
     .tags {
-      margin: 40px 0 80px 0;
+      margin: 50px 0 100px 0;
     }
     .tag-btn {
       background: white;
       color: black;
-      padding: 12px 30px;
+      padding: 12px 32px;
       margin: 10px;
-      font-size: 1.4em;
+      font-size: 1.5em;
       border: none;
       border-radius: 50px;
       text-decoration: none;
@@ -46,24 +47,23 @@
       border-radius: 50px;
       text-decoration: none;
       display: inline-block;
-      margin: 40px 0;
       box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
   </style>
 </head>
 <body>
 
-  <h1>Notes & Historical Law Book Links</h1>
+  <h1>Notes & Historical<br>Law Book Links</h1>
   <h2>by Rob Logue</h2>
 
   <div class="tags">
-    <a href="/tags/test" class="tag-btn">Test</a>
-    <a href="/tags/vicinage" class="tag-btn">Vicinage</a>
-    <a href="/tags/common-law" class="tag-btn">Common Law</a>
-    <!-- Add more tags here when you have them -->
+    {% assign all_tags = site.notes | map: 'tags' | join: ',' | split: ',' | uniq | sort %}
+    {% for tag in all_tags %}
+      <a href="/tags/{{ tag | slugify }}" class="tag-btn">{{ tag }}</a>
+    {% endfor %}
   </div>
 
-  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="new-note-btn">New Note</a>
+  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="new-note-btn" target="_blank">New Note</a>
 
 </body>
 </html>
