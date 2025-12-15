@@ -1,6 +1,13 @@
 title: Notes & Historical Law Book Links
+description: Common law notes and resources by Rob Logue
 author: Rob Logue
-theme: jekyll-theme-minimal  # Or try jekyll-theme-cayman, jekyll-theme-merlot for nicer looks
+
+remote_theme: pages-themes/cayman@v0.2.0  # This forces the exact cayman theme you want (yellow background, white tag buttons, perfect sizing)
+plugins:
+  - jekyll-remote-theme
+  - jekyll-feed
+  - jekyll-seo-tag
+
 collections:
   notes:
     output: true
