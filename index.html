@@ -1,26 +1,32 @@
----
-layout: default
-title: My Law Notes
----
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Law Notes</title>
+  <style>
+    body { background: #FFD700; color: black; font-family: Georgia, serif; text-align: center; margin: 0; padding: 40px; }
+    h1 { font-size: 4em; margin-bottom: 0; }
+    h2 { font-size: 2em; margin-top: 0; font-style: italic; }
+    .tags { margin: 40px 0; }
+    .tag-btn { background: black; color: #FFD700; padding: 15px 30px; margin: 10px; font-size: 1.5em; border: none; border-radius: 50px; text-decoration: none; display: inline-block; }
+    .white-btn { background: white; color: black; }
+    .create-btn { background: black; color: #FFD700; padding: 20px 40px; margin: 60px; font-size: 2em; border-radius: 50px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>My Law Notes</h1>
+  <h2>Notes & Historical Law Book Links<br>by Rob Logue</h2>
 
-<h1 style="text-align:center;">My Law Notes</h1>
+  <div class="tags">
+    <a href="/tags/test" class="tag-btn white-btn">Test</a>
+    <a href="/tags/vicinage" class="tag-btn white-btn">Vicinage</a>
+    <a href="/tags/common-law" class="tag-btn white-btn">Common Law</a>
+    <!-- Add or remove more tag buttons here -->
+  </div>
 
-{% assign sorted_notes = site.notes | sort: 'date' | reverse %}
-{% for note in sorted_notes %}
-  <a href="{{ note.url }}" class="note-link">
-    {{ note.title }}
-    <br>
-    <small>{{ note.date | date: "%B %d, %Y" }}</small>
-  </a>
-  {% if note.tags %}
-    <div style="text-align:center;">
-      {% for tag in note.tags %}
-        <span class="tag">{{ tag }}</span>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endfor %}
+  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="create-btn">+ Create New Note</a>
 
-{% if site.notes.size == 0 %}
-  <p style="text-align:center; font-size:1.2em;">No notes yet — create your first one in Pages CMS!</p>
-{% endif %}
+  <p style="font-size: 1.5em;">Add notes using the button above — they'll appear here!</p>
+</body>
+</html>
