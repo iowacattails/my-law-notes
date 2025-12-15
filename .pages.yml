@@ -7,7 +7,7 @@ content:
     path: content/notes
     filename: "{{date:YYYY-MM-DD}}-{{slug}}.md"
     view:
-      fields: [title, date, category, cover_image]
+      fields: [title, date, tags, cover_image]  # Shows tags in list view
     fields:
       - name: title
         label: Title
@@ -20,11 +20,10 @@ content:
         label: Date
         type: date
         default: today
-      - name: category
-        label: Category
-        type: select
-        options:
-          values: [Contracts, Torts, Criminal Law]
+      - name: tags
+        label: Tags
+        type: list
+        description: Add one or more tags (e.g., Constitutional Law, Judicial Review)
       - name: body
         label: Note Content
         type: rich-text
