@@ -9,17 +9,21 @@ content:
     label: Law Notes
     type: collection
     path: content/notes
-    # ↑ Your note files will be saved as Markdown in /content/notes/ (e.g., contract-law.md)
-    # Create the 'content/notes' folder if it doesn't exist yet — Pages CMS can do it automatically on first save
+    # ↑ Your note files will be saved as Markdown in /content/notes/ (e.g., gold-standard.md)
 
     filename_template: "{{slug}}"
-    # ↑ Auto-generates clean filenames from the title (e.g., "Contract Law" → contract-law.md)
+    # ↑ Auto-generates clean filenames from the title (e.g., "Gold Standard" → gold-standard.md)
 
     fields:
       - name: title
         label: Title
         type: string
         required: true
+
+      - name: cover_image
+        label: Cover Image or Thumbnail
+        type: image
+        # ↑ Upload a book cover, key page scan, or thumbnail — shows preview in form and can be displayed on site
 
       - name: date
         label: Date
@@ -38,23 +42,31 @@ content:
           - Constitutional
           - Evidence
           - Civil Procedure
+          - Common Law
+          - Historical
           - Other
-        # ↑ Dropdown menu — add/remove categories as needed
+        # ↑ Dropdown menu — add/remove as needed
 
       - name: tags
         label: Tags
         type: string
         list: true
-        # ↑ Allows multiple tags (e.g., "offer", "acceptance", "consideration")
+        # ↑ Allows multiple tags (e.g., "gold", "money", "constitution")
 
       - name: body
         label: Note Content
         type: rich-text
         required: true
-        # ↑ Full WYSIWYG editor: bold, italics, lists, links, headings, code blocks, etc.
+        # ↑ Full WYSIWYG editor: bold, italics, lists, links, headings, etc.
+
+      - name: attachments
+        label: Additional Files (PDFs, PPTs, etc.)
+        type: file
+        list: true
+        # ↑ Attach multiple supporting files (e.g., full book PDFs, PowerPoint slides, extra scans)
 
       - name: draft
         label: Draft (hide from public site)
         type: boolean
         default: false
-        # ↑ Optional: check to keep a note private/unpublished
+        # ↑ Check to keep a note private/unpublished
