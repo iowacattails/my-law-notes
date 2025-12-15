@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tags - Notes & Historical Law Book Links</title>
+  <title>All Tags - Notes & Historical Law Book Links</title>
   <style>
     body {
       background: #FFD700;
@@ -14,44 +14,47 @@
       padding: 40px 20px;
     }
     h1 {
-      font-size: 2.5em;
+      font-size: 2.8em;
+      margin-bottom: 40px;
     }
     .search-box {
-      margin: 30px 0;
-      font-size: 1.4em;
+      margin: 40px 0;
     }
     .search-input {
-      padding: 10px;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 25px;
-      border: 1px solid black;
-      font-size: 1.2em;
+      padding: 15px;
+      width: 85%;
+      max-width: 500px;
+      font-size: 1.4em;
+      border-radius: 50px;
+      border: 2px solid black;
+      text-align: center;
     }
     .tag-list {
       list-style: none;
       padding: 0;
+      margin: 40px 0;
     }
     .tag-item {
-      margin: 10px 0;
-      font-size: 1.4em;
+      margin: 15px 0;
     }
     .tag-link {
-      color: black;
-      text-decoration: none;
       background: white;
-      padding: 8px 25px;
+      color: black;
+      padding: 12px 35px;
+      font-size: 1.6em;
       border-radius: 50px;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
   </style>
   <script>
     function searchTags() {
       let input = document.getElementById('search').value.toLowerCase();
-      let tags = document.getElementsByClassName('tag-item');
-      for (let tag of tags) {
-        let text = tag.textContent.toLowerCase();
-        tag.style.display = text.includes(input) ? '' : 'none';
+      let items = document.getElementsByClassName('tag-item');
+      for (let item of items) {
+        let text = item.textContent.toLowerCase();
+        item.style.display = text.includes(input) ? '' : 'none';
       }
     }
   </script>
