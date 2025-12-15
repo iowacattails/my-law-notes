@@ -1,78 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Law Notes by Tag</title>
-<style>
-  body {background:#ff0;margin:40px;font-family:Arial;text-align:center;}
-  h1 {font-size:3em;}
-  .tag {display:inline-block;background:#fff;color:#000;padding:20px 40px;margin:15px;font-size:2em;border:4px solid #000;border-radius:15px;text-decoration:none;font-weight:bold;}
-  .tag:hover {background:#000;color:#ff0;}
-  .count {font-size:0.6em;display:block;margin-top:10px;}
-  #results {margin-top:80px;}
-  .note {margin:40px auto;max-width:900px;text-align:left;background:#fff;padding:40px;border:4px solid #000;}
-</style>
-</head>
-<body>
-<h1>Law Notes by Tag</h1>
-<div id="tags">Loading tags...</div>
-<div id="results"></div>
-
-<script>
-async function loadTags() {
-  try {
-    const res = await fetch('https://api.github.com/repos/iowacattails/my-law-notes/git/trees/main?recursive=1');
-    const data = await res.json();
-    const files = data.tree.filter(f => f.path.endsWith('.html') && !['index.html','publisher.html','tags.html'].includes(f.path.split('/').pop()));
-
-    const tagCount = {};
-    const notesByTag = {};
-
-    for (const file of files) {
-      const htmlRes = await fetch(file.path);
-      const html = await htmlRes.text();
-      const match = html.match(/<em>Tags: (.*?)<\/em>/);
-      if (match) {
-        const tags = match[1].split(', ').map(t => t.trim());
-        tags.forEach(t => {
-          tagCount[t] = (tagCount[t] || 0) + 1;
-          if (!notesByTag[t]) notesByTag[t] = [];
-          notesByTag[t].push({file: file.path, title: file.path.replace('.html','').replace(/-/g,' ').replace(/\b\w/g, c=>c.toUpperCase())});
-        });
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tags - Notes & Historical Law Book Links</title>
+  <style>
+    body {
+      background: #FFD700;
+      color: black;
+      font-family: Georgia, 'Times New Roman', serif;
+      text-align: center;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-size: 2.5em;
+    }
+    .search-box {
+      margin: 30px 0;
+      font-size: 1.4em;
+    }
+    .search-input {
+      padding: 10px;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 25px;
+      border: 1px solid black;
+      font-size: 1.2em;
+    }
+    .tag-list {
+      list-style: none;
+      padding: 0;
+    }
+    .tag-item {
+      margin: 10px 0;
+      font-size: 1.4em;
+    }
+    .tag-link {
+      color: black;
+      text-decoration: none;
+      background: white;
+      padding: 8px 25px;
+      border-radius: 50px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+  <script>
+    function searchTags() {
+      let input = document.getElementById('search').value.toLowerCase();
+      let tags = document.getElementsByClassName('tag-item');
+      for (let tag of tags) {
+        let text = tag.textContent.toLowerCase();
+        tag.style.display = text.includes(input) ? '' : 'none';
       }
     }
+  </script>
+</head>
+<body>
 
-    const sortedTags = Object.keys(tagCount).sort((a,b) => tagCount[b] - tagCount[a]);
-    const container = document.getElementById('tags');
-    container.innerHTML = '';
-    sortedTags.forEach(tag => {
-      const a = document.createElement('a');
-      a.href = '#';
-      a.className = 'tag';
-      a.textContent = tag;
-      a.innerHTML += `<span class="count">${tagCount[tag]} note${tagCount[tag]>1?'s':''}</span>`;
-      a.onclick = () => showNotes(tag, notesByTag[tag]);
-      container.appendChild(a);
-    });
-  } catch (e) {
-    document.getElementById('tags').innerHTML = '<p>Tags loading... (check internet)</p>';
-  }
-}
+  <h1>All Tags</h1>
 
-function showNotes(tag, notes) {
-  const results = document.getElementById('results');
-  let html = `<h2>Notes tagged "${tag}" (${notes.length})</h2>`;
-  notes.forEach(n => {
-    html += `<a href="${n.file}" class="note"><strong>${n.title}</strong></a><br><br>`;
-  });
-  results.innerHTML = html;
-  window.scrollTo(0, document.getElementById('results').offsetTop);
-}
+  <div class="search-box">
+    <input type="text" id="search" class="search-input" placeholder="Search tags or keywords..." onkeyup="searchTags()">
+  </div>
 
-loadTags();
-</script>
+  <ul class="tag-list">
+    {% assign all_tags = site.notes | map: 'tags' | join: ',' | split: ',' | uniq | sort %}
+    {% for tag in all_tags %}
+      {% assign count = 0 %}
+      {% for note in site.notes %}
+        {% if note.tags contains tag %}
+          {% assign count = count | plus: 1 %}
+        {% endif %}
+      {% endfor %}
+      <li class="tag-item">
+        <a href="/tags/{{ tag | slugify }}" class="tag-link">{{ tag }} ({{ count }})</a>
+      </li>
+    {% endfor %}
+  </ul>
 
-<hr style="border:none;border-top:4px solid #000;margin:100px 0;">
-<p><a href="index.html" style="font-size:2em;color:#000;text-decoration:none;">← Back to All Notes</a></p>
 </body>
 </html>
