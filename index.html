@@ -3,30 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Law Notes</title>
+  <title>Notes & Historical Law Book Links</title>
   <style>
-    body { background: #FFD700; color: black; font-family: Georgia, serif; text-align: center; margin: 0; padding: 40px; }
-    h1 { font-size: 4em; margin-bottom: 0; }
-    h2 { font-size: 2em; margin-top: 0; font-style: italic; }
-    .tags { margin: 40px 0; }
-    .tag-btn { background: black; color: #FFD700; padding: 15px 30px; margin: 10px; font-size: 1.5em; border: none; border-radius: 50px; text-decoration: none; display: inline-block; }
-    .white-btn { background: white; color: black; }
-    .create-btn { background: black; color: #FFD700; padding: 20px 40px; margin: 60px; font-size: 2em; border-radius: 50px; text-decoration: none; }
+    body {
+      background: #FFD700;
+      color: black;
+      font-family: Georgia, 'Times New Roman', serif;
+      text-align: center;
+      margin: 0;
+      padding: 60px 20px;
+    }
+    h1 {
+      font-size: 2.8em;
+      margin: 0 0 10px 0;
+    }
+    h2 {
+      font-size: 1.8em;
+      margin: 0 0 60px 0;
+      font-weight: normal;
+    }
+    .tags {
+      margin: 40px 0 80px 0;
+    }
+    .tag-btn {
+      background: white;
+      color: black;
+      padding: 12px 30px;
+      margin: 10px;
+      font-size: 1.4em;
+      border: none;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .new-note-btn {
+      background: black;
+      color: #FFD700;
+      padding: 14px 40px;
+      font-size: 1.6em;
+      border: none;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-block;
+      margin: 40px 0;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
   </style>
 </head>
 <body>
-  <h1>My Law Notes</h1>
-  <h2>Notes & Historical Law Book Links<br>by Rob Logue</h2>
+
+  <h1>Notes & Historical Law Book Links</h1>
+  <h2>by Rob Logue</h2>
 
   <div class="tags">
-    <a href="/tags/test" class="tag-btn white-btn">Test</a>
-    <a href="/tags/vicinage" class="tag-btn white-btn">Vicinage</a>
-    <a href="/tags/common-law" class="tag-btn white-btn">Common Law</a>
-    <!-- Add or remove more tag buttons here -->
+    <a href="/tags/test" class="tag-btn">Test</a>
+    <a href="/tags/vicinage" class="tag-btn">Vicinage</a>
+    <a href="/tags/common-law" class="tag-btn">Common Law</a>
+    <!-- Add more tags here when you have them -->
   </div>
 
-  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="create-btn">+ Create New Note</a>
+  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="new-note-btn">New Note</a>
 
-  <p style="font-size: 1.5em;">Add notes using the button above — they'll appear here!</p>
 </body>
 </html>
