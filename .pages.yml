@@ -1,11 +1,13 @@
-media: media
+media: media  # Assumes your media/uploads folder is called 'media' — change if different (e.g., 'assets/media')
 
 content:
   - name: notes
     label: Law Notes
     type: collection
-    path: content/notes
-    filename_template: "{{slug}}"
+    path: content/notes  # Folder where your note Markdown files are stored
+    filename: "{{date:YYYY-MM-DD}}-{{slug}}.md"  # Safe naming: date + slug to avoid duplicates
+    view:
+      fields: [title, date, category, cover_image]  # Optional: controls what columns show in the list view
     fields:
       - name: title
         label: Title
@@ -20,37 +22,12 @@ content:
         default: today
       - name: category
         label: Category
-        type: string
+        type: select  # This creates a dropdown
         options:
           - Contracts
           - Torts
           - Criminal Law
-          - Property
-          - Constitutional
-          - Evidence
-          - Civil Procedure
-          - Common Law
-          - Historical
-          - Other
-      - name: tags
-        label: Tags
-        type: string
-        list: true
+          # Add more categories here if needed, e.g. - Constitutional Law
       - name: body
         label: Note Content
-        type: rich-text
-        required: true
-      - name: attachments
-        label: Additional Files (PDFs, PPTs, etc.)
-        type: file
-        list: true
-      - name: draft
-        label: Draft (hide from public site)
-        type: boolean
-        default: false
-
-  - name: files
-    label: Site Files
-    type: files
-    path: ""
-    # This line unlocks the full file browser for index.html, tags.html, etc.
+        type: rich-text  # This gives the full WYSIWYG editor for your main notes
