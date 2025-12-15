@@ -1,69 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notes & Historical Law Book Links</title>
-  <style>
-    body {
-      background: #FFD700;
-      color: black;
-      font-family: Georgia, 'Times New Roman', serif;
-      text-align: center;
-      margin: 0;
-      padding: 50px 20px 80px;
-    }
-    h1 {
-      font-size: 2.8em;
-      margin: 0 0 10px 0;
-      line-height: 1.2;
-    }
-    h2 {
-      font-size: 1.6em;
-      margin: 0 0 70px 0;
-      font-weight: normal;
-    }
-    .tags {
-      margin: 50px 0 100px 0;
-    }
-    .tag-btn {
-      background: white;
-      color: black;
-      padding: 12px 32px;
-      margin: 10px;
-      font-size: 1.5em;
-      border: none;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .new-note-btn {
-      background: black;
-      color: #FFD700;
-      padding: 14px 40px;
-      font-size: 1.6em;
-      border: none;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-    }
-  </style>
-</head>
-<body>
+---
+layout: default
+title: Home
+---
 
-  <h1>Notes & Historical<br>Law Book Links</h1>
+<div class="home">
+  <h1>Notes & Historical Law Book Links</h1>
   <h2>by Rob Logue</h2>
 
-  <div class="tags">
-    {% assign all_tags = site.notes | map: 'tags' | join: ',' | split: ',' | uniq | sort %}
-    {% for tag in all_tags %}
-      <a href="/tags/{{ tag | slugify }}" class="tag-btn">{{ tag }}</a>
+  <ul class="note-list">
+    {% for note in site.notes reversed %}
+      <li class="note-item">
+        {% if note.cover_image %}
+          <a href="{{ note.url }}">
+            <img src="{{ note.cover_image }}" alt="{{ note.title }}" class="note-thumbnail">
+          </a>
+        {% endif %}
+
+        <div class="note-info">
+          <h3><a href="{{ note.url }}">{{ note.title }}</a></h3>
+          <p class="note-date">{{ note.date | date: "%B %d, %Y" }}</p>
+
+          {% if note.tags %}
+            <p class="note-tags">
+              Tags:
+              {% for tag in note.tags %}
+                <span class="tag">{{ tag }}</span>{% unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            </p>
+          {% endif %}
+
+          <p class="note-excerpt">
+            {{ note.body | strip_html | truncatewords: 50 }}
+            <a href="{{ note.url }}" class="read-more">Read more →</a>
+          </p>
+        </div>
+      </li>
     {% endfor %}
-  </div>
+  </ul>
 
-  <a href="https://app.pagescms.org/iowacattails/my-law-notes" class="new-note-btn" target="_blank">New Note</a>
+  <p style="text-align: center; margin-top: 40px;">
+    <a href="https://app.pagescms.org" class="new-note-button">+ New Note (Open Editor)</a>
+  </p>
+</div>
 
-</body>
-</html>
+<style>
+  .note-list { list-style: none; padding: 0; }
+  .note-item { margin-bottom: 40px; display: flex; gap: 20px; align-items: flex-start; }
+  .note-thumbnail { max-width: 200px; height: auto; border-radius: 8px; }
+  .note-info { flex: 1; }
+  .note-date { color: #666; font-size: 0.9em; }
+  .note-tags { margin: 10px 0; }
+  .tag { background: #ffeb3b; padding: 4px 10px; border-radius: 20px; font-size: 0.8em; }
+  .note-excerpt { color: #444; }
+  .read-more { color: #000; font-weight: bold; text-decoration: none; }
+  .new-note-button {
+    background: #000; color: #ffeb3b; padding: 12px 24px; border-radius: 30px;
+    text-decoration: none; font-weight: bold; font-size: 1.2em;
+  }
+</style>
