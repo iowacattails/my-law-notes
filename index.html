@@ -1,60 +1,38 @@
 ---
 layout: default
-title: Home
 ---
 
-<div class="home">
+<div class="header">
   <h1>Notes & Historical Law Book Links</h1>
   <h2>by Rob Logue</h2>
+</div>
 
-  <ul class="note-list">
-    {% for note in site.notes reversed %}
-      <li class="note-item">
-        {% if note.cover_image %}
-          <a href="{{ note.url }}">
-            <img src="{{ note.cover_image }}" alt="{{ note.title }}" class="note-thumbnail">
-          </a>
-        {% endif %}
-
-        <div class="note-info">
-          <h3><a href="{{ note.url }}">{{ note.title }}</a></h3>
-          <p class="note-date">{{ note.date | date: "%B %d, %Y" }}</p>
-
-          {% if note.tags %}
-            <p class="note-tags">
-              Tags:
-              {% for tag in note.tags %}
-                <span class="tag">{{ tag }}</span>{% unless forloop.last %}, {% endunless %}
-              {% endfor %}
-            </p>
-          {% endif %}
-
-          <p class="note-excerpt">
-            {{ note.body | strip_html | truncatewords: 50 }}
-            <a href="{{ note.url }}" class="read-more">Read more →</a>
-          </p>
+<div class="notes-list">
+  {% for note in site.notes %}
+    <div class="note-card">
+      {% if note.cover_image %}
+        <img src="{{ note.cover_image }}" alt="{{ note.title }}" class="note-image">
+      {% endif %}
+      <h3><a href="{{ note.url }}">{{ note.title }}</a></h3>
+      <p class="date">{{ note.date | date: "%B %d, %Y" }}</p>
+      {% if note.tags %}
+        <div class="tags">
+          {% for tag in note.tags %}
+            <span class="tag-pill">{{ tag }}</span>
+          {% endfor %}
         </div>
-      </li>
-    {% endfor %}
-  </ul>
-
-  <p style="text-align: center; margin-top: 40px;">
-    <a href="https://app.pagescms.org" class="new-note-button">+ New Note (Open Editor)</a>
-  </p>
+      {% endif %}
+      <p>{{ note.body | strip_html | truncatewords: 50 }} <a href="{{ note.url }}">Read more →</a></p>
+    </div>
+  {% endfor %}
 </div>
 
 <style>
-  .note-list { list-style: none; padding: 0; }
-  .note-item { margin-bottom: 40px; display: flex; gap: 20px; align-items: flex-start; }
-  .note-thumbnail { max-width: 200px; height: auto; border-radius: 8px; }
-  .note-info { flex: 1; }
-  .note-date { color: #666; font-size: 0.9em; }
-  .note-tags { margin: 10px 0; }
-  .tag { background: #ffeb3b; padding: 4px 10px; border-radius: 20px; font-size: 0.8em; }
-  .note-excerpt { color: #444; }
-  .read-more { color: #000; font-weight: bold; text-decoration: none; }
-  .new-note-button {
-    background: #000; color: #ffeb3b; padding: 12px 24px; border-radius: 30px;
-    text-decoration: none; font-weight: bold; font-size: 1.2em;
-  }
+  .header { text-align: center; margin: 50px 0; }
+  .notes-list { max-width: 800px; margin: 0 auto; }
+  .note-card { margin-bottom: 40px; }
+  .note-image { max-width: 100%; border-radius: 8px; }
+  .date { color: #666; }
+  .tags { margin: 10px 0; }
+  .tag-pill { background: white; color: black; padding: 8px 16px; border-radius: 30px; margin-right: 10px; display: inline-block; }
 </style>
