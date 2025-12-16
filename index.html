@@ -2,37 +2,33 @@
 layout: default
 ---
 
-<div class="header">
-  <h1>Notes & Historical Law Book Links</h1>
-  <h2>by Rob Logue</h2>
-</div>
+# Notes & Historical Law Book Links
 
-<div class="notes-list">
-  {% for note in site.notes %}
-    <div class="note-card">
-      {% if note.cover_image %}
-        <img src="{{ note.cover_image }}" alt="{{ note.title }}" class="note-image">
-      {% endif %}
-      <h3><a href="{{ note.url }}">{{ note.title }}</a></h3>
-      <p class="date">{{ note.date | date: "%B %d, %Y" }}</p>
-      {% if note.tags %}
-        <div class="tags">
-          {% for tag in note.tags %}
-            <span class="tag-pill">{{ tag }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
-      <p>{{ note.body | strip_html | truncatewords: 50 }} <a href="{{ note.url }}">Read more →</a></p>
-    </div>
-  {% endfor %}
-</div>
+## by Rob Logue
 
-<style>
-  .header { text-align: center; margin: 50px 0; }
-  .notes-list { max-width: 800px; margin: 0 auto; }
-  .note-card { margin-bottom: 40px; }
-  .note-image { max-width: 100%; border-radius: 8px; }
-  .date { color: #666; }
-  .tags { margin: 10px 0; }
-  .tag-pill { background: white; color: black; padding: 8px 16px; border-radius: 30px; margin-right: 10px; display: inline-block; }
-</style>
+{% for note in site.notes reversed %}
+
+{% if note.cover_image %}
+![]({{ note.cover_image | relative_url }} "{{ note.title }} thumbnail")
+{% endif %}
+
+### [{{ note.title }}]({{ note.url }})
+
+**Date:** {{ note.date | date: "%B %d, %Y" }}
+
+{% if note.tags %}
+**Tags:** 
+{% for tag in note.tags %}
+<span style="background:white;color:black;padding:8px 16px;border-radius:30px;margin:5px;display:inline-block;font-size:0.9em;">{{ tag }}</span>
+{% endfor %}
+{% endif %}
+
+{{ note.body | truncatewords: 50 }} [Read more →]({{ note.url }})
+
+---
+
+{% endfor %}
+
+<p style="text-align:center;margin-top:50px;">
+  <a href="https://app.pagescms.org" style="background:black;color:#ffeb3b;padding:15px 30px;border-radius:30px;text-decoration:none;font-weight:bold;font-size:1.2em;">+ New Note (Open Editor)</a>
+</p>
