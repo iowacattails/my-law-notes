@@ -1,10 +1,11 @@
 title: Notes & Historical Law Book Links
-description: Common law notes and resources by Rob Logue
+description: Common law notes and resources
 author: Rob Logue
 
-remote_theme: pages-themes/cayman@v0.2.0  # This forces the exact cayman theme you want (yellow background, white tag buttons, perfect sizing)
+remote_theme: pages-themes/cayman@v0.2.0  # Forces the yellow background + white rounded tag buttons
+
 plugins:
-  - jekyll-remote-theme
+  - jekyll-remote-theme  # Required for remote_theme on GitHub Pages
   - jekyll-feed
   - jekyll-seo-tag
 
